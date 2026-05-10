@@ -5,6 +5,10 @@ export class InMemoryNewsArticleRepository implements NewsArticleRepositoryPort 
   private articles: Map<string, NewsArticle> = new Map();
   private urlIndex: Map<string, string> = new Map();
 
+  async findById(id: string): Promise<NewsArticle | null> {
+    return this.articles.get(id) || null;
+  }
+
   async findByUrl(url: string): Promise<NewsArticle | null> {
     for (const article of this.articles.values()) {
       if (article.articleUrl === url) {

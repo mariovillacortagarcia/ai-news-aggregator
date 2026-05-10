@@ -4,6 +4,8 @@ import { NewsArticle } from '../../src/core/domain/entities/news-article';
 import { PullSource } from '../../src/core/domain/entities/pull-source';
 import { GetArticlesToNotifyUseCase } from '../../src/core/application/use-cases/get-articles-to-notify.use-case';
 import { SendBatchNotificationUseCase } from '../../src/core/application/use-cases/send-batch-notification.use-case';
+import { ApproveArticleUseCase } from '../../src/core/application/use-cases/approve-article.use-case';
+import { RejectArticleUseCase } from '../../src/core/application/use-cases/reject-article.use-case';
 import { InMemoryNewsArticleRepository } from '../../src/core/domain/test/mocks/in-memory-news-article.repository';
 import { InMemoryTelegramNotificationRepository } from '../../src/core/domain/test/mocks/in-memory-telegram-notification.repository';
 
@@ -12,6 +14,8 @@ export class CustomWorld extends World {
   public telegramNotification: InMemoryTelegramNotificationRepository;
   public getArticlesToNotifyUseCase: GetArticlesToNotifyUseCase;
   public sendNotificationUseCase: SendBatchNotificationUseCase;
+  public approveArticleUseCase: ApproveArticleUseCase;
+  public rejectArticleUseCase: RejectArticleUseCase;
   public articles: NewsArticle[] = [];
   public pullSources: PullSource[] = [];
   public savedArticles: NewsArticle[] = [];
@@ -38,6 +42,12 @@ export class CustomWorld extends World {
       this.getArticlesToNotifyUseCase,
       this.articleRepository,
       this.telegramNotification,
+    );
+    this.approveArticleUseCase = new ApproveArticleUseCase(
+      this.articleRepository,
+    );
+    this.rejectArticleUseCase = new RejectArticleUseCase(
+      this.articleRepository,
     );
   }
 }
