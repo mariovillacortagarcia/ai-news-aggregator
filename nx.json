@@ -2,10 +2,7 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "analytics": false,
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
       "!{projectRoot}/.eslintrc.json",
@@ -42,7 +39,9 @@
         "targetName": "test"
       },
       "exclude": [
-        "apps/ingestion-microservice-e2e/**/*"
+        "apps/ingestion-microservice-e2e/**/*",
+        "apps/agents-microservice-e2e/**/*",
+        "apps/publishing-microservice-e2e/**/*"
       ]
     }
   ],
