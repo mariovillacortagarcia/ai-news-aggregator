@@ -1,69 +1,32 @@
-import {
-  After,
-  Before,
-  Given,
-  IWorldOptions,
-  setWorldConstructor,
-  Then,
-  When,
-  World,
-} from '@cucumber/cucumber';
+import { Before, Given, Then, When } from '@cucumber/cucumber';
+import { CustomWorld } from '../support/custom-world';
 import { ArticleStatus, NewsArticle } from '../../src/core/domain/entities/news-article';
 import { RssPullSource, PullSource } from '../../src/core/domain/entities/pull-source';
+import { ExtractedArticleData } from '../../src/core/domain/ports/pull-source-extractor.port';
 import { InMemoryPullSourceRepository } from '../../src/core/domain/test/mocks/in-memory-pull-source.repository';
 import { InMemoryNewsArticleRepository } from '../../src/core/domain/test/mocks/in-memory-news-article.repository';
 import { InMemoryPullSourceExtractor } from '../../src/core/domain/test/mocks/in-memory-pull-source.extractor';
 import { ProcessScheduledPullUseCase } from '../../src/core/application/use-cases/process-scheduled-pull.use-case';
-import { ExtractedArticleData } from '../../src/core/domain/ports/pull-source-extractor.port';
 
-export interface CustomWorld extends World {
-  pullSources: PullSource[];
-  existingArticles: NewsArticle[];
-  savedArticles: NewsArticle[];
-  sourceExtractionErrors: Set<string>;
-  lastCheckedTimestamps: Map<string, Date>;
+interface PullIngestionWorld extends CustomWorld {
   pullSourceRepository: InMemoryPullSourceRepository;
   newsArticleRepository: InMemoryNewsArticleRepository;
   pullSourceExtractor: InMemoryPullSourceExtractor;
-  processScheduledPullUseCase: ProcessScheduledPullUseCase;
-  processResult: { success: string[]; errors: { sourceId: string; error: Error }[] } | null;
-  ingestionError: Error | null;
-  processingCompleted: boolean;
+  processScheduledPull: ProcessScheduledPullUseCase;
 }
 
-export class CustomWorldConstructor extends World implements CustomWorld {
-  public pullSources: PullSource[] = [];
-  public existingArticles: NewsArticle[] = [];
-  public savedArticles: NewsArticle[] = [];
-  public sourceExtractionErrors: Set<string> = new Set();
-  public lastCheckedTimestamps: Map<string, Date> = new Map();
-  public pullSourceRepository: InMemoryPullSourceRepository;
-  public newsArticleRepository: InMemoryNewsArticleRepository;
-  public pullSourceExtractor: InMemoryPullSourceExtractor;
-  public processScheduledPullUseCase: ProcessScheduledPullUseCase;
-  public processResult: { success: string[]; errors: { sourceId: string; error: Error }[] } | null = null;
-  public ingestionError: Error | null = null;
-  public processingCompleted = false;
-
-  constructor(options: IWorldOptions) {
-    super(options);
-
-    this.pullSourceRepository = new InMemoryPullSourceRepository();
-    this.newsArticleRepository = new InMemoryNewsArticleRepository();
-    this.pullSourceExtractor = new InMemoryPullSourceExtractor();
-    this.processScheduledPullUseCase = new ProcessScheduledPullUseCase(
-      this.pullSourceRepository,
-      this.newsArticleRepository,
-      this.pullSourceExtractor
-    );
-  }
-}
-
-setWorldConstructor(CustomWorldConstructor);
-
-Before(function (this: CustomWorld) {
+Before(function (this: PullIngestionWorld) {
+  this.pullSourceRepository = new InMemoryPullSourceRepository();
+  this.newsArticleRepository = new InMemoryNewsArticleRepository();
+  this.pullSourceExtractor = new InMemoryPullSourceExtractor();
+  this.processScheduledPull = new ProcessScheduledPullUseCase(
+    this.pullSourceRepository,
+    this.newsArticleRepository,
+    this.pullSourceExtractor
+  );
+  
+  this.articles = [];
   this.pullSources = [];
-  this.existingArticles = [];
   this.savedArticles = [];
   this.sourceExtractionErrors = new Set();
   this.lastCheckedTimestamps = new Map();
@@ -72,20 +35,9 @@ Before(function (this: CustomWorld) {
   this.processingCompleted = false;
 });
 
-After(function (this: CustomWorld) {
-  this.pullSources = [];
-  this.existingArticles = [];
-  this.savedArticles = [];
-  this.sourceExtractionErrors.clear();
-  this.lastCheckedTimestamps.clear();
-  this.processResult = null;
-  this.ingestionError = null;
-  this.processingCompleted = false;
-});
-
 Given(
   'the system has a list of target sources configured for pulling',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const source = new RssPullSource(
       'source-1',
       new Date(Date.now() - 600000),
@@ -99,7 +51,7 @@ Given(
 
 Given(
   'a configured source is reachable and has new content',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const source = new RssPullSource(
       'source-1',
       new Date(Date.now() - 600000),
@@ -124,14 +76,14 @@ Given(
 
 Given(
   'the new article URL {string} does not exist in the system',
-  async function (this: CustomWorld, url: string) {
-    // Article doesn't exist by default in the in-memory repository
+  async function (this: PullIngestionWorld, url: string) {
+    // Article doesn't exist by default
   },
 );
 
 Given(
   'the article URL {string} already exists in the system',
-  async function (this: CustomWorld, url: string) {
+  async function (this: PullIngestionWorld, url: string) {
     const existingArticle = new NewsArticle(
       'existing-article-id',
       url,
@@ -145,14 +97,14 @@ Given(
       new Date(),
       new Date()
     );
-    this.existingArticles.push(existingArticle);
+    this.articles.push(existingArticle);
     await this.newsArticleRepository.save(existingArticle);
   },
 );
 
 Given(
-  'the article was published after the source{apos}s last checked timestamp',
-  async function (this: CustomWorld) {
+  "the article was published after the source's last checked timestamp",
+  async function (this: PullIngestionWorld) {
     const lastChecked = new Date(Date.now() - 600000);
     this.lastCheckedTimestamps.set('source-1', lastChecked);
   },
@@ -160,7 +112,7 @@ Given(
 
 Given(
   'a configured source is reachable',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const source = new RssPullSource(
       'source-1',
       new Date(Date.now() - 600000),
@@ -174,7 +126,7 @@ Given(
 
 Given(
   'a configured source that has changed its structure or is down',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const source = new RssPullSource(
       'source-1',
       new Date(Date.now() - 600000),
@@ -191,7 +143,7 @@ Given(
 
 Given(
   'multiple pull sources are due for checking',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     this.pullSources = [
       new RssPullSource(
         'source-1',
@@ -221,9 +173,9 @@ Given(
 
 When(
   'the scheduled pulling process is triggered for this source',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     try {
-      this.processResult = await this.processScheduledPullUseCase.execute();
+      this.processResult = await this.processScheduledPull.execute();
       
       if (this.processResult.errors.length > 0) {
         this.ingestionError = this.processResult.errors[0].error;
@@ -239,9 +191,9 @@ When(
 
 When(
   'the scheduled pulling process is triggered',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     try {
-      this.processResult = await this.processScheduledPullUseCase.execute();
+      this.processResult = await this.processScheduledPull.execute();
       
       if (this.processResult.errors.length > 0) {
         this.ingestionError = this.processResult.errors[0].error;
@@ -257,7 +209,7 @@ When(
 
 Then(
   'the system should extract the news content successfully',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     if (this.ingestionError !== null) {
       throw new Error(`Expected no error but got: ${this.ingestionError?.message}`);
     }
@@ -266,7 +218,7 @@ Then(
 
 Then(
   'a new article with status {string} should be created',
-  async function (this: CustomWorld, status: string) {
+  async function (this: PullIngestionWorld, status: string) {
     const allArticles = await this.newsArticleRepository.find();
     const newArticles = allArticles.filter(a => a.status === status);
     
@@ -278,7 +230,7 @@ Then(
 
 Then(
   'the article should be saved',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const allArticles = await this.newsArticleRepository.find();
     if (allArticles.length === 0) {
       throw new Error('Expected at least one article to be saved');
@@ -288,9 +240,9 @@ Then(
 
 Then(
   'the system should identify the article as a duplicate',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const allArticles = await this.newsArticleRepository.find();
-    if (allArticles.length === this.existingArticles.length) {
+    if (allArticles.length === this.articles.length) {
       return;
     }
     throw new Error('Expected duplicate to be detected');
@@ -299,9 +251,9 @@ Then(
 
 Then(
   'the article should not be saved',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     const allArticles = await this.newsArticleRepository.find();
-    if (allArticles.length !== this.existingArticles.length) {
+    if (allArticles.length !== this.articles.length) {
       throw new Error('Expected no new articles to be saved');
     }
   },
@@ -309,7 +261,7 @@ Then(
 
 Then(
   'the system should inform about the failure to pull from the source',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     if (this.ingestionError === null) {
       throw new Error('Expected an error but got null');
     }
@@ -323,7 +275,7 @@ Then(
 
 Then(
   'the system should gracefully terminate the job for this specific source',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     if (!this.processingCompleted) {
       throw new Error('Expected processing to complete gracefully');
     }
@@ -332,7 +284,7 @@ Then(
 
 Then(
   'the rest of the pulling schedule should remain unaffected',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     if (!this.processResult) {
       throw new Error('Expected process result to be available');
     }
@@ -341,7 +293,7 @@ Then(
 
 Then(
   'each due source should be processed',
-  async function (this: CustomWorld) {
+  async function (this: PullIngestionWorld) {
     if (!this.processResult) {
       throw new Error('Expected process result to be available');
     }
@@ -354,8 +306,8 @@ Then(
 );
 
 Then(
-  'each source{apos}s last checked timestamp should be updated',
-  async function (this: CustomWorld) {
+  "each source's last checked timestamp should be updated",
+  async function (this: PullIngestionWorld) {
     for (const source of this.pullSources) {
       const found = await this.pullSourceRepository.findById(source.id);
       if (!found || found.lastPolledAt === null) {

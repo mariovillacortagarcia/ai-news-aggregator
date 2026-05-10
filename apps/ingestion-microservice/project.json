@@ -67,6 +67,14 @@
       "options": {
         "passWithNoTests": true
       }
+    },
+    "test:e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cucumber-js --config .cucumber.cjs",
+        "cwd": "apps/ingestion-microservice"
+      },
+      "dependsOn": ["build"]
     }
   }
 }
