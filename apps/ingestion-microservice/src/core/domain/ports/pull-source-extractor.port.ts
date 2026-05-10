@@ -7,6 +7,6 @@ export interface ExtractedArticleData {
   createdAt: Date;
 }
 
-export interface PullSourceExtractorPort {
-  extract(sourceUrl: string): Promise<ExtractedArticleData[]>;
+export abstract class PullSourceExtractorPort {
+  abstract extract(sourceUrl: string, html?: string, classIdentifiers?: Record<string, string>): Promise<ExtractedArticleData[]>;
 }

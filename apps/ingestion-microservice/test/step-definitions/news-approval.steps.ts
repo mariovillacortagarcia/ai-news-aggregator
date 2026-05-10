@@ -57,6 +57,14 @@ Given(
 );
 
 Given(
+  'the administrator is a valid one',
+  async function (this: NewsApprovalWorld) {
+    // The Telegram polling adapter validates admins at the infrastructure boundary.
+    // These approval use-case scenarios exercise only the domain transition.
+  },
+);
+
+Given(
   'the article status is already {string}',
   async function (this: NewsApprovalWorld, status: string) {
     const existingArticle = this.articles[0];
@@ -84,6 +92,7 @@ When(
   'the administrator approves the article',
   async function (this: NewsApprovalWorld) {
     this.articleActionError = null;
+    this.originalArticleUpdatedAt = this.articles[0]?.updatedAt ?? null;
     try {
       await this.approveArticleUseCase.execute('article-1');
     } catch (error) {
@@ -96,6 +105,7 @@ When(
   'the administrator rejects the article',
   async function (this: NewsApprovalWorld) {
     this.articleActionError = null;
+    this.originalArticleUpdatedAt = this.articles[0]?.updatedAt ?? null;
     try {
       await this.rejectArticleUseCase.execute('article-1');
     } catch (error) {
@@ -108,6 +118,7 @@ When(
   'the administrator attempts to approve the article',
   async function (this: NewsApprovalWorld) {
     this.articleActionError = null;
+    this.originalArticleUpdatedAt = this.articles[0]?.updatedAt ?? null;
     try {
       await this.approveArticleUseCase.execute('article-1');
     } catch (error) {
@@ -142,9 +153,28 @@ Then(
       throw new Error('Article not found after update');
     }
     
-    const originalArticle = this.articles[0];
-    if (originalArticle && updatedArticle.updatedAt.getTime() <= originalArticle.updatedAt.getTime()) {
+    if (
+      this.originalArticleUpdatedAt &&
+      updatedArticle.updatedAt.getTime() <= this.originalArticleUpdatedAt.getTime()
+    ) {
       throw new Error('Expected updatedAt timestamp to be updated');
+    }
+  },
+);
+
+Then(
+  'the article status should remain {string}',
+  async function (this: NewsApprovalWorld, expectedStatus: string) {
+    const updatedArticle = await this.articleRepository.findById('article-1');
+
+    if (!updatedArticle) {
+      throw new Error('Article not found');
+    }
+
+    if (updatedArticle.status !== expectedStatus) {
+      throw new Error(
+        `Expected status to remain ${expectedStatus} but got ${updatedArticle.status}`
+      );
     }
   },
 );

@@ -6,6 +6,6 @@ export interface ArticleNotificationData {
   originalAuthor: string;
 }
 
-export interface TelegramNotificationPort {
-  sendBatchNotification(articles: ArticleNotificationData[]): Promise<void>;
+export abstract class TelegramNotificationPort {
+  abstract sendBatchNotification(articles: ArticleNotificationData[]): Promise<void>;
 }
