@@ -1,19 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { SendBatchNotificationUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/send-batch-notification.use-case';
 import { getSchedulingConfig } from '@ai-news-aggregator/ingestion-microservice/infrastructure/config/scheduling.config';
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ApprovalNotificationScheduler {
   private readonly logger = new Logger(ApprovalNotificationScheduler.name);
   private readonly config = getSchedulingConfig();
 
-  constructor(private readonly sendBatchNotification: SendBatchNotificationUseCase) {}
+  constructor(
+    private readonly sendBatchNotification: SendBatchNotificationUseCase,
+  ) {}
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleApprovalNotification(): Promise<void> {
     if (!this.config.approvalNotificationSchedulerEnabled) {
-      this.logger.debug('Approval notification scheduler disabled by configuration');
+      this.logger.debug(
+        'Approval notification scheduler disabled by configuration',
+      );
       return;
     }
 
@@ -23,7 +27,9 @@ export class ApprovalNotificationScheduler {
       await this.sendBatchNotification.execute();
       this.logger.log('Approval notification check completed');
     } catch (error) {
-      this.logger.error(`Approval notification failed: ${(error as Error).message}`);
+      const errorObj = error as Error;
+      this.logger.error(`Approval notification failed: ${errorObj.message}`);
+      this.logger.debug(`Stack trace: ${errorObj.stack}`);
     }
   }
 }

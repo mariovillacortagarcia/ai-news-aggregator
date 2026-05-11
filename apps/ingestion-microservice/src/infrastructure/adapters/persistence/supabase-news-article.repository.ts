@@ -9,7 +9,7 @@ interface NewsArticleDbRecord {
   title: string;
   content: string;
   author: string;
-  main_image_url: string;
+  main_image_url: string | null;
   pull_source_id: string;
   status: string;
   notified: boolean;
@@ -59,6 +59,8 @@ export class SupabaseNewsArticleRepository implements NewsArticleRepositoryPort 
   }
 
   async save(article: NewsArticle): Promise<NewsArticle> {
+    this.logger.debug(`Saving article: ${article.id} - "${article.title.substring(0, 50)}..."`);
+    
     const client = this.supabaseClient.getClient();
     const table = this.supabaseClient.getNewsArticlesTable();
 
@@ -75,10 +77,13 @@ export class SupabaseNewsArticleRepository implements NewsArticleRepositoryPort 
       throw error;
     }
 
+    this.logger.debug(`Article saved successfully: ${article.id}`);
     return this.mapToDomain(data);
   }
 
   async update(article: NewsArticle): Promise<NewsArticle> {
+    this.logger.debug(`Updating article: ${article.id} - status: ${article.status}, notified: ${article.notified}`);
+    
     const client = this.supabaseClient.getClient();
     const table = this.supabaseClient.getNewsArticlesTable();
 
@@ -96,6 +101,7 @@ export class SupabaseNewsArticleRepository implements NewsArticleRepositoryPort 
       throw error;
     }
 
+    this.logger.debug(`Article updated successfully: ${article.id}`);
     return this.mapToDomain(data);
   }
 

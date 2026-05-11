@@ -45,4 +45,9 @@ export class InMemoryNewsArticleRepository implements NewsArticleRepositoryPort 
     }
     return results;
   }
+
+  clear(): void {
+    this.articles.clear();
+    this.urlIndex.clear();
+  }
 }

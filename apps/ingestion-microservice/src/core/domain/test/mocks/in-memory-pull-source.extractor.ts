@@ -1,4 +1,5 @@
 import { PullSourceExtractorPort, ExtractedArticleData } from '../../ports/pull-source-extractor.port';
+import { PullSource } from '../../entities/pull-source';
 
 export class InMemoryPullSourceExtractor implements PullSourceExtractorPort {
   private articlesToReturn: ExtractedArticleData[] = [];
@@ -19,10 +20,21 @@ export class InMemoryPullSourceExtractor implements PullSourceExtractorPort {
     this.errorMessage = '';
   }
 
-  async extract(sourceUrl: string): Promise<ExtractedArticleData[]> {
+  clear() {
+    this.articlesToReturn = [];
+    this.shouldThrowError = false;
+    this.errorMessage = '';
+  }
+
+  async extract(source: PullSource, lastPolledAt?: Date): Promise<ExtractedArticleData[]> {
     if (this.shouldThrowError) {
       throw new Error(this.errorMessage);
     }
+    
+    if (lastPolledAt) {
+      return this.articlesToReturn.filter(article => article.createdAt > lastPolledAt);
+    }
+    
     return this.articlesToReturn;
   }
 }

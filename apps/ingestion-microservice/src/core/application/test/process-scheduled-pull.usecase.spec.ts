@@ -115,5 +115,6 @@ describe('ProcessScheduledPullUseCase', () => {
       const updated = await pullSourceRepository.findById('source-1');
       expect(updated?.lastPolledAt).toBeDefined();
     });
+
   });
 });

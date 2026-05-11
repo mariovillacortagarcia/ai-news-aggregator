@@ -4,13 +4,27 @@
   "license": "MIT",
   "scripts": {
     "build:ingestion": "npx nx build ingestion-microservice",
-    "start:ingestion": "npm run build:ingestion && /bin/zsh -lc 'set -a; source .env; set +a; node dist/apps/ingestion-microservice/main.js'"
+    "start:ingestion": "npm run build:ingestion && /bin/zsh -lc 'set -a; source .env; set +a; node dist/apps/ingestion-microservice/main.js'",
+    "dev:ingestion": "npx nx serve ingestion-microservice",
+    "test:ingestion": "npx nx test ingestion-microservice",
+    "test:ingestion:watch": "npx nx test ingestion-microservice --watch",
+    "test:ingestion:coverage": "npx nx test ingestion-microservice --coverage",
+    "e2e:ingestion": "npx nx e2e ingestion-microservice-e2e",
+    "e2e:ingestion:watch": "npx nx e2e ingestion-microservice-e2e --watch",
+    "lint:ingestion": "npx nx lint ingestion-microservice",
+    "cucumber:ingestion": "npx nx run ingestion-microservice:test:e2e",
+    "build:all": "npx nx run-many -t build",
+    "test:all": "npx nx run-many -t test",
+    "e2e:all": "npx nx run-many -t e2e"
   },
   "private": true,
   "dependencies": {
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/schedule": "^6.1.3",
+    "@supabase/supabase-js": "^2.105.4",
+    "@types/node-cron": "^3.0.11",
     "axios": "^1.6.0",
     "bullmq": "^5.76.6",
     "cheerio": "^1.2.0",

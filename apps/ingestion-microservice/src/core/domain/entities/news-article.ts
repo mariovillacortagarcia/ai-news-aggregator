@@ -7,13 +7,15 @@ export enum ArticleStatus {
 }
 
 export class NewsArticle {
+  private readonly _mainImageUrl: string;
+
   constructor(
     private readonly _id: string,
     private readonly _articleUrl: string,
     private readonly _title: string,
     private readonly _content: string,
     private readonly _author: string,
-    private readonly _mainImageUrl: string,
+    mainImageUrl: string | null | undefined,
     private readonly _pullSourceId: string,
     private _status: ArticleStatus = ArticleStatus.CANDIDATE,
     private _notified: boolean = false,
@@ -35,9 +37,7 @@ export class NewsArticle {
     if (!_author || _author.trim() === '') {
       throw new ArgumentError('NewsArticle author cannot be empty');
     }
-    if (!_mainImageUrl || _mainImageUrl.trim() === '') {
-      throw new ArgumentError('NewsArticle mainImageUrl cannot be empty');
-    }
+    this._mainImageUrl = mainImageUrl?.trim() ?? '';
     if (!_pullSourceId || _pullSourceId.trim() === '') {
       throw new ArgumentError('NewsArticle pullSourceId cannot be empty');
     }

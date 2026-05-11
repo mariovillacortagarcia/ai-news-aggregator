@@ -62,4 +62,8 @@ export class InMemoryPullSourceRepository implements PullSourceRepositoryPort {
       this.sources.set(id, updated);
     }
   }
+
+  clear(): void {
+    this.sources.clear();
+  }
 }

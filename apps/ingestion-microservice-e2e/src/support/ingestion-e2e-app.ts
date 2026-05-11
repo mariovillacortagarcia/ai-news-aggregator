@@ -1,121 +1,90 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '@ai-news-aggregator/ingestion-microservice/app/app.module';
-import { ProcessDuePullSourcesUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/process-due-pull-sources.use-case';
-import { InMemoryNewsArticleRepository } from '@ai-news-aggregator/ingestion-microservice/infrastructure/adapters/persistence/in-memory-news-article.repository';
-import { InMemoryPullSourceRepository } from '@ai-news-aggregator/ingestion-microservice/infrastructure/adapters/persistence/in-memory-pull-source.repository';
-import { INGESTION_TOKENS } from '@ai-news-aggregator/ingestion-microservice/infrastructure/di/ingestion.tokens';
-import { Source } from '@ai-news-aggregator/ingestion-microservice/core/domain/entities/source.entity';
-import { SourceRepositoryPort } from '@ai-news-aggregator/ingestion-microservice/core/application/ports/outbound/source.repository.port';
+import { SupabaseClientProvider } from '@ai-news-aggregator/ingestion-microservice/infrastructure/config/supabase-client.provider';
+import { InMemoryNewsArticleRepository } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-news-article.repository';
+import { InMemoryPullSourceRepository } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-pull-source.repository';
+import { InMemoryPullSourceExtractor } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-pull-source.extractor';
+import { InMemoryTelegramNotificationRepository } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-telegram-notification.repository';
+import { NewsArticleRepositoryPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/news-article-repository.port';
+import { PullSourceRepositoryPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/pull-source-repository.port';
+import { PullSourceExtractorPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/pull-source-extractor.port';
+import { TelegramNotificationPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/telegram-notification.port';
+import { ApproveArticleUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/approve-article.use-case';
+import { RejectArticleUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/reject-article.use-case';
+import { ProcessScheduledPullUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/process-scheduled-pull.use-case';
+import { SendBatchNotificationUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/send-batch-notification.use-case';
+import { GetArticlesToNotifyUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/get-articles-to-notify.use-case';
 
 export interface IngestionE2eContext {
   app: INestApplication;
-  repository: InMemoryNewsArticleRepository;
+  articleRepository: InMemoryNewsArticleRepository;
   pullSourceRepository: InMemoryPullSourceRepository;
-  sourceRepository: InMemorySourceRepository;
-  processDuePullSources: ProcessDuePullSourcesUseCase;
-  fetchMock: jest.Mock;
-}
-
-export class InMemorySourceRepository implements SourceRepositoryPort {
-  private readonly sourcesById = new Map<string, Source>();
-
-  async findById(id: string): Promise<Source | null> {
-    return this.sourcesById.get(id) ?? null;
-  }
-
-  async findByUrl(url: string): Promise<Source | null> {
-    return Array.from(this.sourcesById.values()).find(s => s.sourceUrl.value === url) ?? null;
-  }
-
-  async save(source: Source): Promise<void> {
-    this.sourcesById.set(source.id, source);
-  }
-
-  clear(): void {
-    this.sourcesById.clear();
-  }
+  pullSourceExtractor: InMemoryPullSourceExtractor;
+  telegramNotification: InMemoryTelegramNotificationRepository;
+  approveArticle: ApproveArticleUseCase;
+  rejectArticle: RejectArticleUseCase;
+  processScheduledPull: ProcessScheduledPullUseCase;
+  sendBatchNotification: SendBatchNotificationUseCase;
+  getArticlesToNotify: GetArticlesToNotifyUseCase;
 }
 
 export async function createIngestionE2eApp(): Promise<IngestionE2eContext> {
-  const fetchMock = jest.fn();
-  global.fetch = fetchMock;
-  const sourceRepository = new InMemorySourceRepository();
+  const articleRepository = new InMemoryNewsArticleRepository();
+  const pullSourceRepository = new InMemoryPullSourceRepository();
+  const pullSourceExtractor = new InMemoryPullSourceExtractor();
+  const telegramNotification = new InMemoryTelegramNotificationRepository();
 
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
   })
-    .overrideProvider(INGESTION_TOKENS.ingestionConfig)
-    .useValue({
-      pullSourcesPollIntervalMs: 60_000,
-      pullSourcesSchedulerEnabled: false,
-      telegramBotToken: 'bot-token',
-      telegramAdminUserId: '42',
-    })
-    .overrideProvider(INGESTION_TOKENS.sourceRepository)
-    .useValue(sourceRepository)
+    .overrideProvider(SupabaseClientProvider)
+    .useValue({})
+    .overrideProvider(NewsArticleRepositoryPort)
+    .useValue(articleRepository)
+    .overrideProvider(PullSourceRepositoryPort)
+    .useValue(pullSourceRepository)
+    .overrideProvider(PullSourceExtractorPort)
+    .useValue(pullSourceExtractor)
+    .overrideProvider(TelegramNotificationPort)
+    .useValue(telegramNotification)
     .compile();
 
   const app = moduleRef.createNestApplication();
   app.setGlobalPrefix('api');
   await app.init();
 
+  const approveArticle = new ApproveArticleUseCase(articleRepository);
+  const rejectArticle = new RejectArticleUseCase(articleRepository);
+  const getArticlesToNotify = new GetArticlesToNotifyUseCase(articleRepository);
+  const processScheduledPull = new ProcessScheduledPullUseCase(
+    pullSourceRepository,
+    articleRepository,
+    pullSourceExtractor,
+  );
+  const sendBatchNotification = new SendBatchNotificationUseCase(
+    getArticlesToNotify,
+    articleRepository,
+    telegramNotification,
+  );
+
   return {
     app,
-    repository: app.get(INGESTION_TOKENS.newsArticleRepository),
-    pullSourceRepository: app.get(INGESTION_TOKENS.pullSourceRepository),
-    sourceRepository,
-    processDuePullSources: app.get(ProcessDuePullSourcesUseCase),
-    fetchMock,
+    articleRepository,
+    pullSourceRepository,
+    pullSourceExtractor,
+    telegramNotification,
+    approveArticle,
+    rejectArticle,
+    processScheduledPull,
+    sendBatchNotification,
+    getArticlesToNotify,
   };
 }
 
 export async function resetIngestionE2eContext(context: IngestionE2eContext): Promise<void> {
-  context.repository.clear();
+  context.articleRepository.clear();
   context.pullSourceRepository.clear();
-  context.sourceRepository.clear();
-  context.fetchMock.mockReset();
-}
-
-export function validReactivePayload(articleUrl = 'https://example.com/quantum-breakthrough') {
-  return {
-    title: 'Quantum Computing Breakthrough',
-    articleUrl,
-    content: 'Body',
-    mainImageUrl: 'https://example.com/image.jpg',
-    originalAuthor: 'Original Author',
-    sourceId: '00112233-4455-6677-8899-aabbccddeeff',
-  };
-}
-
-export async function createCandidate(
-  context: IngestionE2eContext,
-  articleUrl = 'https://example.com/quantum-breakthrough',
-): Promise<string> {
-  const response = await request(context.app.getHttpServer())
-    .post('/api/ingestion/reactive')
-    .send(validReactivePayload(articleUrl))
-    .expect(201);
-
-  return response.body.article.id as string;
-}
-
-export function mockSourceHtml(context: IngestionE2eContext, articleUrl: string): void {
-  context.fetchMock.mockResolvedValueOnce({
-    ok: true,
-    text: async () => `
-      <html>
-        <head>
-          <title>Pulled Article Title</title>
-          <link rel="canonical" href="${articleUrl}">
-        </head>
-        <body>
-          <img src="https://example.com/image.jpg">
-          <span class="author">Original Author</span>
-          Pulled article body content
-        </body>
-      </html>
-    `,
-  });
+  context.pullSourceExtractor.clear();
+  context.telegramNotification.clear();
 }

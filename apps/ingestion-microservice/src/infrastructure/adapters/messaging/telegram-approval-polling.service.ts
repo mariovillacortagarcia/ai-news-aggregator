@@ -69,7 +69,12 @@ export class TelegramApprovalPollingService implements OnModuleInit, OnModuleDes
 
   private async pollUpdates(): Promise<void> {
     try {
+      this.logger.debug('Polling for updates...');
       const updates = await this.getUpdates();
+      
+      if (updates.length > 0) {
+        this.logger.debug(`Received ${updates.length} updates`);
+      }
       
       for (const update of updates) {
         if (update.callback_query) {
@@ -87,6 +92,7 @@ export class TelegramApprovalPollingService implements OnModuleInit, OnModuleDes
     const offset = this.lastUpdateId ? this.lastUpdateId + 1 : 0;
     const url = `https://api.telegram.org/bot${this.config.botToken}/getUpdates?offset=${offset}&timeout=10`;
 
+    this.logger.debug(`Fetching updates from offset ${offset}`);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -95,11 +101,14 @@ export class TelegramApprovalPollingService implements OnModuleInit, OnModuleDes
     });
 
     if (!response.ok) {
+      this.logger.error(`Telegram API error: ${response.status}`);
       throw new Error(`Telegram API error: ${response.status}`);
     }
 
     const data = await response.json();
-    return data.result || [];
+    const results = data.result || [];
+    this.logger.debug(`Received ${results.length} updates from Telegram`);
+    return results;
   }
 
   private async handleCallbackQuery(callbackQuery: TelegramUpdate['callback_query']): Promise<void> {

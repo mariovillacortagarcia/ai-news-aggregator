@@ -20,6 +20,8 @@ export class SupabasePullSourceRepository implements PullSourceRepositoryPort {
   constructor(private readonly supabaseClient: SupabaseClientProvider) {}
 
   async findDueSources(now: Date): Promise<PullSource[]> {
+    this.logger.debug(`Finding due sources at ${now.toISOString()}`);
+    
     const client = this.supabaseClient.getClient();
     const table = this.supabaseClient.getPullSourcesTable();
 
@@ -34,10 +36,13 @@ export class SupabasePullSourceRepository implements PullSourceRepositoryPort {
       throw error;
     }
 
+    this.logger.debug(`Found ${data?.length || 0} due sources`);
     return (data as PullSourceDbRecord[]).map(record => this.mapToDomain(record));
   }
 
   async updateLastPolledAt(id: string, timestamp: Date): Promise<void> {
+    this.logger.debug(`Updating last_polled_at for source ${id} to ${timestamp.toISOString()}`);
+    
     const client = this.supabaseClient.getClient();
     const table = this.supabaseClient.getPullSourcesTable();
 
@@ -50,6 +55,8 @@ export class SupabasePullSourceRepository implements PullSourceRepositoryPort {
       this.logger.error(`Failed to update last_polled_at for source ${id}: ${error.message}`);
       throw error;
     }
+
+    this.logger.debug(`Successfully updated last_polled_at for source ${id}`);
   }
 
   async findById(id: string): Promise<PullSource | null> {

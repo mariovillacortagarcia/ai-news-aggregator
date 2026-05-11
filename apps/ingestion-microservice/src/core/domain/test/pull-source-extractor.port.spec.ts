@@ -1,11 +1,14 @@
 import { ExtractedArticleData } from '../ports/pull-source-extractor.port';
 import { InMemoryPullSourceExtractor } from './mocks/in-memory-pull-source.extractor';
+import { RssPullSource } from '../entities/pull-source';
 
 describe('PullSourceExtractorPort', () => {
   let extractor: InMemoryPullSourceExtractor;
+  let mockSource: RssPullSource;
 
   beforeEach(() => {
     extractor = new InMemoryPullSourceExtractor();
+    mockSource = new RssPullSource('test-source', null, true, 'https://example.com/rss');
   });
 
   describe('extract', () => {
@@ -31,7 +34,7 @@ describe('PullSourceExtractorPort', () => {
 
       extractor.setArticlesToReturn(mockArticles);
 
-      const result = await extractor.extract('https://example.com/rss');
+      const result = await extractor.extract(mockSource, undefined);
 
       expect(result).toEqual(mockArticles);
     });
@@ -39,7 +42,7 @@ describe('PullSourceExtractorPort', () => {
     it('should return an empty array when no articles are found', async () => {
       extractor.setArticlesToReturn([]);
 
-      const result = await extractor.extract('https://example.com/rss');
+      const result = await extractor.extract(mockSource, undefined);
 
       expect(result).toEqual([]);
     });
@@ -47,7 +50,7 @@ describe('PullSourceExtractorPort', () => {
     it('should throw an error when extraction fails', async () => {
       extractor.setError('SOURCE_EXTRACTION_ERROR: Failed to extract content');
 
-      await expect(extractor.extract('https://example.com/rss')).rejects.toThrow(
+      await expect(extractor.extract(mockSource, undefined)).rejects.toThrow(
         'SOURCE_EXTRACTION_ERROR: Failed to extract content'
       );
     });
@@ -65,7 +68,7 @@ describe('PullSourceExtractorPort', () => {
         }
       ]);
 
-      const result = await extractor.extract('https://example.com/rss');
+      const result = await extractor.extract(mockSource, undefined);
 
       expect(result[0]).toHaveProperty('title');
       expect(result[0]).toHaveProperty('content');
@@ -74,6 +77,34 @@ describe('PullSourceExtractorPort', () => {
       expect(result[0]).toHaveProperty('articleUrl');
       expect(result[0]).toHaveProperty('createdAt');
       expect(result[0].createdAt).toEqual(createdAt);
+    });
+
+    it('should filter articles by lastPolledAt', async () => {
+      const oldArticle: ExtractedArticleData = {
+        title: 'Old Article',
+        content: 'Old Content',
+        mainImageUrl: 'https://example.com/old.jpg',
+        originalAuthor: 'Old Author',
+        articleUrl: 'https://example.com/old',
+        createdAt: new Date('2024-01-01T00:00:00Z')
+      };
+      
+      const newArticle: ExtractedArticleData = {
+        title: 'New Article',
+        content: 'New Content',
+        mainImageUrl: 'https://example.com/new.jpg',
+        originalAuthor: 'New Author',
+        articleUrl: 'https://example.com/new',
+        createdAt: new Date('2024-01-02T00:00:00Z')
+      };
+
+      extractor.setArticlesToReturn([oldArticle, newArticle]);
+      const lastPolledAt = new Date('2024-01-01T12:00:00Z');
+
+      const result = await extractor.extract(mockSource, lastPolledAt);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe('New Article');
     });
   });
 });

@@ -1,3 +1,5 @@
+import { PullSource } from '../entities/pull-source';
+
 export interface ExtractedArticleData {
   title: string;
   content: string;
@@ -8,5 +10,5 @@ export interface ExtractedArticleData {
 }
 
 export abstract class PullSourceExtractorPort {
-  abstract extract(sourceUrl: string, html?: string, classIdentifiers?: Record<string, string>): Promise<ExtractedArticleData[]>;
+  abstract extract(source: PullSource, lastPolledAt?: Date): Promise<ExtractedArticleData[]>;
 }

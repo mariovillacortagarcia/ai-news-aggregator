@@ -311,41 +311,43 @@ describe('NewsArticle', () => {
       expect(newsArticle.mainImageUrl).toBe(mainImageUrl);
     });
 
-    it('should not allow nullable mainImageUrl of the news article', () => {
-      expect(() => {
-        new NewsArticle(
-          'article-123',
-          'https://example.com/article',
-          'Example Article',
-          'This is an example article.',
-          'John Doe',
-          '',
-            'source-123'
-        );
-      }).toThrow(new ArgumentError('NewsArticle mainImageUrl cannot be empty'));
-      expect(() => {
-        new NewsArticle(
-          'article-123',
-          'https://example.com/article',
-          'Example Article',
-          'This is an example article.',
-          'John Doe',
-          null as any,
-            'source-123'
-        );
-      }).toThrow(new ArgumentError('NewsArticle mainImageUrl cannot be empty'));
+    it('should allow empty mainImageUrl when the article has no image', () => {
+      const newsArticle = new NewsArticle(
+        'article-123',
+        'https://example.com/article',
+        'Example Article',
+        'This is an example article.',
+        'John Doe',
+        '',
+        'source-123'
+      );
 
-      expect(() => {
-        new NewsArticle(
-          'article-123',
-          'https://example.com/article',
-          'Example Article',
-          'This is an example article.',
-          'John Doe',
-          undefined as any,
-            'source-123'
-        );
-      }).toThrow(new ArgumentError('NewsArticle mainImageUrl cannot be empty'));
+      expect(newsArticle.mainImageUrl).toBe('');
+    });
+
+    it('should normalize nullable mainImageUrl to an empty string', () => {
+      const articleWithNullImage = new NewsArticle(
+        'article-123',
+        'https://example.com/article',
+        'Example Article',
+        'This is an example article.',
+        'John Doe',
+        null,
+        'source-123'
+      );
+
+      const articleWithUndefinedImage = new NewsArticle(
+        'article-456',
+        'https://example.com/article-2',
+        'Example Article 2',
+        'This is another example article.',
+        'John Doe',
+        undefined,
+        'source-123'
+      );
+
+      expect(articleWithNullImage.mainImageUrl).toBe('');
+      expect(articleWithUndefinedImage.mainImageUrl).toBe('');
     });
   });
 

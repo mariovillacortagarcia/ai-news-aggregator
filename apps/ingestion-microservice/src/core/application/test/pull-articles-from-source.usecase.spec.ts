@@ -21,15 +21,17 @@ describe('PullArticlesFromSourceUseCase', () => {
 
   describe('execute', () => {
     it('should extract and return new articles from a source', async () => {
+      const lastPolledAt = new Date('2024-01-01T00:00:00Z');
       const source = new RssPullSource(
         'source-1',
-        new Date('2024-01-01T00:00:00Z'),
+        lastPolledAt,
         true,
         'https://example.com/rss'
       );
 
       await pullSourceRepository.save(source);
 
+      const newArticleDate = new Date(lastPolledAt.getTime() + 1000);
       extractor.setArticlesToReturn([
         {
           title: 'New Article 1',
@@ -37,7 +39,7 @@ describe('PullArticlesFromSourceUseCase', () => {
           mainImageUrl: 'https://example.com/image1.jpg',
           originalAuthor: 'Author 1',
           articleUrl: 'https://example.com/article-1',
-          createdAt: new Date('2024-01-01T00:00:00Z')
+          createdAt: newArticleDate
         },
         {
           title: 'New Article 2',
@@ -45,7 +47,7 @@ describe('PullArticlesFromSourceUseCase', () => {
           mainImageUrl: 'https://example.com/image2.jpg',
           originalAuthor: 'Author 2',
           articleUrl: 'https://example.com/article-2',
-          createdAt: new Date('2024-01-01T00:00:00Z')
+          createdAt: newArticleDate
         }
       ]);
 
@@ -57,9 +59,10 @@ describe('PullArticlesFromSourceUseCase', () => {
     });
 
     it('should not return articles that already exist by URL', async () => {
+      const lastPolledAt = new Date('2024-01-01T00:00:00Z');
       const source = new RssPullSource(
         'source-1',
-        new Date('2024-01-01T00:00:00Z'),
+        lastPolledAt,
         true,
         'https://example.com/rss'
       );
@@ -78,6 +81,7 @@ describe('PullArticlesFromSourceUseCase', () => {
 
       await newsArticleRepository.save(existingArticle);
 
+      const newArticleDate = new Date(lastPolledAt.getTime() + 1000);
       extractor.setArticlesToReturn([
         {
           title: 'Existing Article',
@@ -85,7 +89,7 @@ describe('PullArticlesFromSourceUseCase', () => {
           mainImageUrl: 'https://example.com/existing-image.jpg',
           originalAuthor: 'Existing Author',
           articleUrl: 'https://example.com/existing-article',
-          createdAt: new Date('2024-01-01T00:00:00Z')
+          createdAt: newArticleDate
         },
         {
           title: 'New Article',
@@ -93,7 +97,7 @@ describe('PullArticlesFromSourceUseCase', () => {
           mainImageUrl: 'https://example.com/new-image.jpg',
           originalAuthor: 'New Author',
           articleUrl: 'https://example.com/new-article',
-          createdAt: new Date('2024-01-01T00:00:00Z')
+          createdAt: newArticleDate
         }
       ]);
 

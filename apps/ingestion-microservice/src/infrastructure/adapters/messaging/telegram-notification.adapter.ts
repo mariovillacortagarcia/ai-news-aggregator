@@ -4,37 +4,89 @@ import { getTelegramConfig } from '../../config/telegram.config';
 
 @Injectable()
 export class TelegramNotificationAdapter implements TelegramNotificationPort {
+  private static readonly maxMessageLength = 3900;
   private readonly logger = new Logger(TelegramNotificationAdapter.name);
   private readonly config = getTelegramConfig();
 
   async sendBatchNotification(articles: ArticleNotificationData[]): Promise<void> {
+    this.logger.debug(`sendBatchNotification called with ${articles.length} articles`);
+    
     if (!this.config.botToken || !this.config.adminChatId) {
       this.logger.warn('Telegram not configured - skipping notification');
       return;
     }
 
     if (articles.length === 0) {
+      this.logger.debug('No articles to notify - skipping');
       return;
     }
 
-    const message = this.buildNotificationMessage(articles);
-    const inlineKeyboard = this.buildApprovalKeyboard(articles);
+    this.logger.log(`Sending notification for ${articles.length} articles to chat ${this.config.adminChatId}`);
+    const chunks = this.buildNotificationChunks(articles);
 
-    await this.sendMessageWithKeyboard(message, inlineKeyboard);
+    for (const chunk of chunks) {
+      const inlineKeyboard = this.buildApprovalKeyboard(chunk.articles);
+      await this.sendMessageWithKeyboard(chunk.message, inlineKeyboard);
+    }
+    this.logger.log('Batch notification sent successfully');
   }
 
-  private buildNotificationMessage(articles: ArticleNotificationData[]): string {
-    const header = `📰 *Nuevos Artículos Pendientes de Aprobación* (${articles.length})\n\n`;
-    
-    const articleList = articles
-      .map((article, index) => {
-        return `${index + 1}. *${article.title}*\n   👤 ${article.originalAuthor}\n   🔗 ${article.articleUrl}`;
-      })
-      .join('\n\n');
+  private buildNotificationChunks(
+    articles: ArticleNotificationData[],
+  ): Array<{ message: string; articles: ArticleNotificationData[] }> {
+    const chunks: Array<{ message: string; articles: ArticleNotificationData[] }> = [];
+    let currentArticles: ArticleNotificationData[] = [];
+    let currentLines: string[] = [];
 
-    const footer = `\n\n⚡ _Selecciona una acción para cada artículo usando los botones abajo._`;
+    for (const article of articles) {
+      const nextLine = this.buildArticleLine(article, currentArticles.length + 1);
+      const nextMessage = this.buildNotificationMessage(
+        articles.length,
+        currentLines.concat(nextLine),
+      );
+
+      if (
+        currentArticles.length > 0 &&
+        nextMessage.length > TelegramNotificationAdapter.maxMessageLength
+      ) {
+        chunks.push({
+          message: this.buildNotificationMessage(articles.length, currentLines),
+          articles: currentArticles,
+        });
+        currentArticles = [];
+        currentLines = [];
+      }
+
+      currentArticles.push(article);
+      currentLines.push(this.buildArticleLine(article, currentArticles.length));
+    }
+
+    if (currentArticles.length > 0) {
+      chunks.push({
+        message: this.buildNotificationMessage(articles.length, currentLines),
+        articles: currentArticles,
+      });
+    }
+
+    return chunks;
+  }
+
+  private buildNotificationMessage(totalArticles: number, articleLines: string[]): string {
+    const header = `📰 <b>Nuevos Artículos Pendientes de Aprobación</b> (${totalArticles})\n\n`;
+    
+    const articleList = articleLines.join('\n\n');
+
+    const footer = `\n\n⚡ <i>Selecciona una acción para cada artículo usando los botones abajo.</i>`;
 
     return header + articleList + footer;
+  }
+
+  private buildArticleLine(article: ArticleNotificationData, index: number): string {
+    const title = this.escapeHtml(this.truncate(article.title, 220));
+    const author = this.escapeHtml(this.truncate(article.originalAuthor, 120));
+    const articleUrl = this.escapeHtml(this.truncate(article.articleUrl, 500));
+
+    return `${index}. <b>${title}</b>\n   👤 ${author}\n   🔗 ${articleUrl}`;
   }
 
   private buildApprovalKeyboard(articles: ArticleNotificationData[]): any {
@@ -67,7 +119,7 @@ export class TelegramNotificationAdapter implements TelegramNotificationPort {
       body: JSON.stringify({
         chat_id: this.config.adminChatId,
         text: message,
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
         reply_markup: replyMarkup,
       }),
     });
@@ -79,5 +131,20 @@ export class TelegramNotificationAdapter implements TelegramNotificationPort {
     }
 
     this.logger.log(`Notification sent with ${replyMarkup.inline_keyboard.length} articles`);
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  private truncate(value: string, maxLength: number): string {
+    if (value.length <= maxLength) {
+      return value;
+    }
+
+    return `${value.slice(0, maxLength - 1)}…`;
   }
 }

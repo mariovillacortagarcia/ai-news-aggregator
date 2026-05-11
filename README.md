@@ -37,7 +37,7 @@ This monorepo orchestrates three decoupled NestJS microservices that coordinate 
 
 ### Installation & Execution
 
-\`\`\`bash
+```bash
 
 # Install dependencies
 
@@ -52,7 +52,60 @@ npm install
 npx nx serve ingestion-microservice
 npx nx serve agents-microservice
 npx nx serve publishing-microservice
-\`\`\`
+```
+
+## 📦 NPM Scripts (Ingestion Microservice)
+
+For simplified development workflow, the following NPM scripts are available in the root `package.json`:
+
+### Build & Start
+```bash
+npm run build:ingestion          # Build the microservice for production
+npm run start:ingestion          # Build + start in production mode
+npm run dev:ingestion            # Development mode with hot-reload
+```
+
+### Testing
+```bash
+npm run test:ingestion           # Run unit tests (106 tests)
+npm run test:ingestion:watch     # Run tests in watch mode
+npm run test:ingestion:coverage  # Run tests with coverage report
+npm run e2e:ingestion            # Run E2E integration tests (14 tests)
+npm run e2e:ingestion:watch      # Run E2E tests in watch mode
+```
+
+### Linting & BDD
+```bash
+npm run lint:ingestion           # Run ESLint on the codebase
+npm run cucumber:ingestion       # Run BDD tests with Cucumber
+```
+
+### Global Commands (All Microservices)
+```bash
+npm run build:all                # Build all projects in the monorepo
+npm run test:all                 # Run tests for all projects
+npm run e2e:all                  # Run E2E tests for all projects
+```
+
+### Recommended Workflows
+
+**Daily Development:**
+```bash
+npm run dev:ingestion            # Start dev server with hot-reload
+npm run test:ingestion:watch     # Auto-rerun tests on file changes
+```
+
+**Pre-Commit:**
+```bash
+npm run test:ingestion           # Quick unit tests
+npm run lint:ingestion           # Code linting
+```
+
+**Pre-Deploy:**
+```bash
+npm run build:ingestion          # Production build
+npm run e2e:ingestion            # Full E2E test suite
+```
 
 ### Ingestion Pull Sources
 
