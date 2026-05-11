@@ -10,10 +10,15 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
+    "baseUrl": ".",
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "paths": {}
+    "paths": {
+      "@ai-news-aggregator/ingestion-microservice/*": [
+        "apps/ingestion-microservice/src/*"
+      ]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

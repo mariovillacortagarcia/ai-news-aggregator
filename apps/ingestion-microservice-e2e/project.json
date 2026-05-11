@@ -11,10 +11,7 @@
         "jestConfig": "apps/ingestion-microservice-e2e/jest.config.cts",
         "passWithNoTests": true
       },
-      "dependsOn": [
-        "ingestion-microservice:build",
-        "ingestion-microservice:serve"
-      ]
+      "dependsOn": ["ingestion-microservice:build"]
     }
   }
 }
