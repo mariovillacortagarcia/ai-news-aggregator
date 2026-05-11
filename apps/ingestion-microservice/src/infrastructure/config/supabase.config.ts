@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getEnvironmentConfig, resetEnvironmentConfigForTest } from './environment.config';
 
 export interface SupabaseConfig {
   url: string;
@@ -8,11 +9,13 @@ export interface SupabaseConfig {
 }
 
 export function getSupabaseConfig(): SupabaseConfig {
+  const config = getEnvironmentConfig();
+
   return {
-    url: process.env.SUPABASE_URL || '',
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    newsArticlesTable: process.env.SUPABASE_NEWS_ARTICLES_TABLE || 'news_articles',
-    pullSourcesTable: process.env.SUPABASE_PULL_SOURCES_TABLE || 'pull_sources',
+    url: config.supabaseUrl,
+    serviceRoleKey: config.supabaseServiceRoleKey,
+    newsArticlesTable: config.supabaseNewsArticlesTable,
+    pullSourcesTable: config.supabasePullSourcesTable,
   };
 }
 
@@ -31,4 +34,5 @@ export function getSupabaseClient(): SupabaseClient {
 
 export function resetSupabaseClient(): void {
   supabaseClient = null;
+  resetEnvironmentConfigForTest();
 }

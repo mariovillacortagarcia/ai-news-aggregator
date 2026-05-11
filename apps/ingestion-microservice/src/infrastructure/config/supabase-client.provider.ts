@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseConfig } from './supabase.config';
+import { getEnvironmentConfig } from './environment.config';
 
 @Injectable()
 export class SupabaseClientProvider {
@@ -24,10 +25,10 @@ export class SupabaseClientProvider {
   }
 
   getNewsArticlesTable(): string {
-    return process.env.SUPABASE_NEWS_ARTICLES_TABLE || 'news_articles';
+    return getEnvironmentConfig().supabaseNewsArticlesTable;
   }
 
   getPullSourcesTable(): string {
-    return process.env.SUPABASE_PULL_SOURCES_TABLE || 'pull_sources';
+    return getEnvironmentConfig().supabasePullSourcesTable;
   }
 }

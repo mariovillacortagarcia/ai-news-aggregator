@@ -1,3 +1,5 @@
+import { getEnvironmentConfig } from './environment.config';
+
 export interface SchedulingConfig {
   pullSourcesPollIntervalMs: number;
   pullSourcesSchedulerEnabled: boolean;
@@ -5,9 +7,11 @@ export interface SchedulingConfig {
 }
 
 export function getSchedulingConfig(): SchedulingConfig {
+  const config = getEnvironmentConfig();
+
   return {
-    pullSourcesPollIntervalMs: parseInt(process.env.PULL_SOURCES_POLL_INTERVAL_MS || '300000', 10),
-    pullSourcesSchedulerEnabled: process.env.PULL_SOURCES_SCHEDULER_ENABLED !== 'false',
-    approvalNotificationSchedulerEnabled: process.env.APPROVAL_NOTIFICATION_SCHEDULER_ENABLED !== 'false',
+    pullSourcesPollIntervalMs: config.pullSourcesPollIntervalMs,
+    pullSourcesSchedulerEnabled: config.pullSourcesSchedulerEnabled,
+    approvalNotificationSchedulerEnabled: config.approvalNotificationSchedulerEnabled,
   };
 }

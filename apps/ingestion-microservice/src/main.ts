@@ -6,6 +6,7 @@
 import { Logger, LogLevel } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
+import { getEnvironmentConfig } from './infrastructure/config/environment.config';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -17,7 +18,7 @@ async function bootstrap() {
   });
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 3000;
+  const port = getEnvironmentConfig().port;
   await app.listen(port);
   logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
