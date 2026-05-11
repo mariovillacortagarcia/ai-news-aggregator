@@ -2,7 +2,7 @@ import { ApproveArticleUseCase } from '@ai-news-aggregator/ingestion-microservic
 import { RejectArticleUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/reject-article.use-case';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { getTelegramConfig } from '../../config/telegram.config';
+import { getTelegramConfig } from '../config/telegram.config';
 
 interface TelegramUpdate {
   update_id: number;
