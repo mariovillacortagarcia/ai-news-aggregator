@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/security-scan.mjs",
+            "timeout": 30,
+            "statusMessage": "Scanning repository for leaked credentials"
+          }
+        ]
+      }
+    ]
+  }
+}
