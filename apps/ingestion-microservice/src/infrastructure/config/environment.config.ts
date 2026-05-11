@@ -9,7 +9,6 @@ export interface IngestionEnvironmentConfig {
   telegramBotToken: string;
   telegramAdminChatId: string;
   telegramAdminUserIds: string[];
-  telegramPollingIntervalMs: number;
   telegramPollingEnabled: boolean;
   pullSourcesPollIntervalMs: number;
   pullSourcesSchedulerEnabled: boolean;
@@ -25,7 +24,6 @@ interface ValidatedEnvironment {
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_ADMIN_CHAT_ID: string;
   TELEGRAM_ADMIN_USER_IDS: string;
-  TELEGRAM_POLLING_INTERVAL_MS: number;
   TELEGRAM_POLLING_ENABLED: boolean;
   PULL_SOURCES_POLL_INTERVAL_MS: number;
   PULL_SOURCES_SCHEDULER_ENABLED: boolean;
@@ -56,7 +54,6 @@ const environmentSchema = Joi.object<ValidatedEnvironment>({
     .pattern(/^\s*$|^\d+(?:\s*,\s*\d+)*$/)
     .allow('')
     .default(''),
-  TELEGRAM_POLLING_INTERVAL_MS: Joi.number().integer().min(1).default(30000),
   TELEGRAM_POLLING_ENABLED: booleanSchema.default(true),
   PULL_SOURCES_POLL_INTERVAL_MS: Joi.number().integer().min(1).default(300000),
   PULL_SOURCES_SCHEDULER_ENABLED: booleanSchema.default(true),
@@ -87,7 +84,6 @@ export function getEnvironmentConfig(): IngestionEnvironmentConfig {
     telegramAdminUserIds: env.TELEGRAM_ADMIN_USER_IDS.split(',')
       .map((id) => id.trim())
       .filter((id) => id !== ''),
-    telegramPollingIntervalMs: env.TELEGRAM_POLLING_INTERVAL_MS,
     telegramPollingEnabled: env.TELEGRAM_POLLING_ENABLED,
     pullSourcesPollIntervalMs: env.PULL_SOURCES_POLL_INTERVAL_MS,
     pullSourcesSchedulerEnabled: env.PULL_SOURCES_SCHEDULER_ENABLED,

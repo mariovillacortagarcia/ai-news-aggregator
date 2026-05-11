@@ -12,7 +12,7 @@ export class PullSourcesScheduler {
     private readonly processScheduledPull: ProcessScheduledPullUseCase,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async handlePullSourcesCheck(): Promise<void> {
     if (!this.config.pullSourcesSchedulerEnabled) {
       this.logger.debug('Pull sources scheduler disabled by configuration');

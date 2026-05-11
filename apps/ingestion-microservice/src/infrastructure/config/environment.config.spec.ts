@@ -23,7 +23,6 @@ describe('environment config validation', () => {
       telegramBotToken: '',
       telegramAdminChatId: '',
       telegramAdminUserIds: [],
-      telegramPollingIntervalMs: 30000,
       telegramPollingEnabled: true,
       pullSourcesPollIntervalMs: 300000,
       pullSourcesSchedulerEnabled: true,
@@ -35,7 +34,6 @@ describe('environment config validation', () => {
     process.env = {
       PORT: '3100',
       TELEGRAM_ADMIN_USER_IDS: '123, 987',
-      TELEGRAM_POLLING_INTERVAL_MS: '1000',
       TELEGRAM_POLLING_ENABLED: 'false',
       PULL_SOURCES_POLL_INTERVAL_MS: '2000',
       PULL_SOURCES_SCHEDULER_ENABLED: '0',
@@ -46,7 +44,6 @@ describe('environment config validation', () => {
 
     expect(config.port).toBe(3100);
     expect(config.telegramAdminUserIds).toEqual(['123', '987']);
-    expect(config.telegramPollingIntervalMs).toBe(1000);
     expect(config.telegramPollingEnabled).toBe(false);
     expect(config.pullSourcesPollIntervalMs).toBe(2000);
     expect(config.pullSourcesSchedulerEnabled).toBe(false);
