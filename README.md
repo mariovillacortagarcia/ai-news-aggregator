@@ -1,9 +1,9 @@
 # 📰 AI News Aggregator (Enterprise Backend)
 
+![Status](https://img.shields.io/badge/Status-WIP-orange?style=for-the-badge)
 ![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
 ![Nx](https://img.shields.io/badge/Nx-143055?style=for-the-badge&logo=nx&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)
 
 An Enterprise-grade automated news aggregator and AI-powered editorial system. Built with Domain-Driven Design (DDD) and Hexagonal Architecture inside an Nx monorepo.
@@ -12,7 +12,7 @@ An Enterprise-grade automated news aggregator and AI-powered editorial system. B
 
 This monorepo orchestrates three decoupled NestJS microservices that coordinate through persisted state in Supabase/PostgreSQL. Each downstream microservice polls the shared database for rows that became ready in the previous stage.
 
-1. **📥 Ingestion Microservice**: Reactively consumes RSS feeds and periodically scrapes persisted non-reactive HTML sources from Supabase/PostgreSQL (using HTTP fetch + Cheerio). Filters candidate articles and pushes alerts via Telegram Bot for a Human-in-the-Loop approval flow.
+1. **📥 Ingestion Microservice**: Runs scheduled background jobs that reactively consume RSS feeds and periodically scrape configured HTML sources from Supabase/PostgreSQL (using HTTP fetch + Cheerio). Filters candidate articles and sends batch notifications via Telegram Bot for Human-in-the-Loop approval flow.
 2. **🤖 Agentic Generation Microservice**: Powered by LangGraph and cost-efficient LLMs (GPT-4o-mini / Gemini 1.5 Flash). Polls approved articles from the shared database and runs them through an AI editorial room with two autonomous agents: a _Writer Agent_ (content generation) and a _Reviewer Agent_ (SEO and editorial guidelines enforcement).
 3. **🚀 Publishing Microservice**: Polls approved editorial content from the shared database and publishes it to external CMS platforms (e.g., WordPress REST API) with rich metadata.
 
@@ -21,9 +21,9 @@ This monorepo orchestrates three decoupled NestJS microservices that coordinate 
 - **Framework:** NestJS (TypeScript) inside an **Nx Monorepo**.
 - **Architecture:** Hexagonal Architecture (Ports and Adapters) & Domain-Driven Design (DDD).
 - **Communication:** DB polling between bounded contexts using persisted status transitions.
+- **Scheduling:** **@nestjs/schedule** for cron-based background jobs (pull sources, notifications, approval polling).
 - **Database:** **Supabase** (PostgreSQL) for state management and immutable backups.
 - **AI Orchestration:** **LangGraph** (TypeScript ecosystem) generating Structured Outputs (JSON).
-- **Containerization:** Isolated **Dockerfiles** for each microservice, allowing custom OS-level dependencies (like Chromium for scraping).
 - **Deployment:** Hosted on **Railway** as continuous background worker processes.
 
 ## 🚀 Getting Started
@@ -31,7 +31,6 @@ This monorepo orchestrates three decoupled NestJS microservices that coordinate 
 ### Prerequisites
 
 - Node.js (v18+)
-- Docker (Optional, for local containerized execution)
 - Supabase project URL and keys
 - OpenAI / Google Gemini API keys
 
@@ -67,17 +66,17 @@ npm run dev:ingestion            # Development mode with hot-reload
 
 ### Testing
 ```bash
-npm run test:ingestion           # Run unit tests (106 tests)
+npm run test:ingestion           # Run unit tests (123 tests)
 npm run test:ingestion:watch     # Run tests in watch mode
 npm run test:ingestion:coverage  # Run tests with coverage report
-npm run e2e:ingestion            # Run E2E integration tests (14 tests)
+npm run e2e:ingestion            # Run E2E integration tests (3 tests)
 npm run e2e:ingestion:watch      # Run E2E tests in watch mode
 ```
 
 ### Linting & BDD
 ```bash
 npm run lint:ingestion           # Run ESLint on the codebase
-npm run cucumber:ingestion       # Run BDD tests with Cucumber
+npm run cucumber:ingestion       # Run BDD tests with Cucumber (3 feature files)
 ```
 
 ### Global Commands (All Microservices)
@@ -147,41 +146,32 @@ PULL_SOURCES_SCHEDULER_ENABLED=true
 
 ### Telegram Bot
 
-The ingestion microservice sends approval notifications through Telegram and
-also exposes an inbound webhook for inline button callbacks:
-
-- `POST /api/ingestion/notifications/approval`: sends the current batch of
-  pending candidate articles to the configured admin chat.
-- `POST /api/ingestion/webhooks/telegram`: receives Telegram `callback_query`
-  updates and translates them into approve/reject commands.
+The ingestion microservice sends approval notifications through Telegram using
+a scheduled scheduler. The notification process runs every hour (configurable)
+and sends batches of pending candidate articles to the configured admin chat.
 
 Required env vars:
 
-\`\`\`bash
+```bash
 TELEGRAM_BOT_TOKEN=...
 TELEGRAM_ADMIN_CHAT_ID=<telegram-chat-id>
 TELEGRAM_ADMIN_USER_IDS=<telegram-user-id>,<telegram-user-id>
-\`\`\`
+```
 
 Backward compatibility:
 
 - `TELEGRAM_ADMIN_USER_IDS` is the preferred setting.
 - `TELEGRAM_ADMIN_USER_ID` is still accepted as fallback for a single admin.
 
-To connect the bot in production, register Telegram's webhook against your
-public ingestion URL:
-
-\`\`\`bash
-curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://your-domain.com/api/ingestion/webhooks/telegram"}'
-\`\`\`
+The approval/rejection flow is handled through Telegram inline buttons that
+trigger use cases directly within the microservice.
 
 ## 🛡️ Architectural Decisions
 
-- **DB Polling Between Micros:** The cross-microservice contract is persisted state, not a broker. Ingestion leaves `NewsArticle` rows in `APPROVED`, Agents leaves `EditorialContent` rows in `APPROVED_BY_AGENT`, and Publishing polls those repositories on a schedule.
+- **DB Polling Between Micros:** The cross-microservice contract is persisted state, not message queues or HTTP calls. Ingestion leaves `NewsArticle` rows in `APPROVED`, Agents leaves `EditorialContent` rows in `APPROVED_BY_AGENT`, and Publishing polls those repositories on a schedule.
 - **Hexagonal Isolation:** The core domain is strictly framework-agnostic. Swapping Supabase for MongoDB or WordPress for a social media integration requires zero changes to the core business rules.
 - **Hybrid LLM Strategy:** Leverages small, fast, and cheap models tuned for structured outputs to handle massive text processing economically, saving larger models only for complex reasoning tasks.
+- **Scheduled Jobs:** All background processes (RSS/HTML pulling, Telegram notifications, article approval polling) use @nestjs/schedule instead of message queues for simplicity and direct database coordination.
 
 ## 📊 Database Schema
 
@@ -313,16 +303,21 @@ WORDPRESS_APPLICATION_PASSWORD=your_app_password
 
 ## 📦 Running Migrations
 
-SQL migrations are located in `apps/supabase-migrations/`. Apply them in order:
+SQL migrations should be applied to your Supabase database in order:
 
-\`\`\`bash
+```bash
 # Via Supabase CLI
 supabase db push
 
 # Or manually via psql
-psql -h db.xxx.supabase.co -U postgres -d postgres -f apps/supabase-migrations/001_add_pending_generation_to_news_articles.sql
-psql -h db.xxx.supabase.co -U postgres -d postgres -f apps/supabase-migrations/002_create_editorial_contents_table.sql
-psql -h db.xxx.supabase.co -U postgres -d postgres -f apps/supabase-migrations/003_create_published_articles_table.sql
-\`\`\`
+psql -h db.xxx.supabase.co -U postgres -d postgres -f 001_add_pending_generation_to_news_articles.sql
+psql -h db.xxx.supabase.co -U postgres -d postgres -f 002_create_editorial_contents_table.sql
+psql -h db.xxx.supabase.co -U postgres -d postgres -f 003_create_published_articles_table.sql
+```
 
-See `apps/supabase-migrations/README.md` for detailed instructions.
+Required tables:
+
+- `news_articles`: managed by ingestion-microservice, consumed by agents-microservice
+- `editorial_contents`: created by agents-microservice, consumed by publishing-microservice
+- `published_articles`: created by publishing-microservice for tracking
+- `pull_sources`: configuration for pull-based sources (HTML scraping)
