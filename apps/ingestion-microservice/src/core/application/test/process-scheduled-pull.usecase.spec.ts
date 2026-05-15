@@ -1,6 +1,6 @@
 import { RssPullSource } from "../../domain/entities/pull-source";
 import { InMemoryPullSourceRepository } from "../../domain/test/mocks/in-memory-pull-source.repository";
-import { InMemoryNewsArticleRepository } from "../../domain/test/mocks/in-memory-news-article.repository";
+import { InMemoryNewsArticleRepository } from '@ai-news-aggregator/news-article';
 import { InMemoryPullSourceExtractor } from "../../domain/test/mocks/in-memory-pull-source.extractor";
 import { ProcessScheduledPullUseCase } from "../use-cases/process-scheduled-pull.use-case";
 

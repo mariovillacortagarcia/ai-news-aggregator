@@ -1,5 +1,5 @@
 Feature: Periodic News Approval Notification
-  As the ingestion microservice
+  As a content aggregation platform
   I want to periodically pull pending news articles to notify the administrators
   So that they can review and approve news in batches via Telegram
 

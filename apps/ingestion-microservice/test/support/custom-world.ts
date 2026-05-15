@@ -1,12 +1,11 @@
 import { World, IWorldOptions } from '@cucumber/cucumber';
 import { ArticleNotificationData } from '../../src/core/domain/ports/telegram-notification.port';
-import { NewsArticle } from '../../src/core/domain/entities/news-article';
+import { NewsArticle, InMemoryNewsArticleRepository } from '@ai-news-aggregator/news-article';
 import { PullSource } from '../../src/core/domain/entities/pull-source';
 import { GetArticlesToNotifyUseCase } from '../../src/core/application/use-cases/get-articles-to-notify.use-case';
 import { SendBatchNotificationUseCase } from '../../src/core/application/use-cases/send-batch-notification.use-case';
 import { ApproveArticleUseCase } from '../../src/core/application/use-cases/approve-article.use-case';
 import { RejectArticleUseCase } from '../../src/core/application/use-cases/reject-article.use-case';
-import { InMemoryNewsArticleRepository } from '../../src/core/domain/test/mocks/in-memory-news-article.repository';
 import { InMemoryTelegramNotificationRepository } from '../../src/core/domain/test/mocks/in-memory-telegram-notification.repository';
 
 export class CustomWorld extends World {

@@ -1,5 +1,5 @@
-import { ArgumentError } from "../errors/argument.error";
-import { NewsArticle, ArticleStatus } from "../entities/news-article";
+import { ArgumentError } from '../errors/argument.error';
+import { NewsArticle, ArticleStatus } from '../entities/news-article';
 
 describe('NewsArticle', () => {
   describe('constructor', () => {

@@ -1,4 +1,4 @@
-import { ArticleStatus, NewsArticle } from '@ai-news-aggregator/ingestion-microservice/core/domain/entities/news-article';
+import { ArticleStatus, NewsArticle } from '@ai-news-aggregator/news-article';
 import {
   IngestionE2eContext,
   createIngestionE2eApp,
@@ -20,7 +20,7 @@ describe('Approval Notification E2E', () => {
   describe('Sending a batch notification for pending candidates', () => {
     it('should send notification for unnotified CANDIDATE articles', async () => {
       const articles: NewsArticle[] = [];
-      
+
       for (let i = 0; i < 5; i++) {
         const article = new NewsArticle(
           `article-${i}`,
@@ -46,12 +46,13 @@ describe('Approval Notification E2E', () => {
 
       await context.sendBatchNotification.execute();
 
-      const lastNotification = context.telegramNotification.getLastNotification();
+      const lastNotification =
+        context.telegramNotification.getLastNotification();
       expect(lastNotification).not.toBeNull();
       expect(lastNotification?.length).toBe(3);
 
       const allArticles = await context.articleRepository.find();
-      const notifiedArticles = allArticles.filter(a => a.notified);
+      const notifiedArticles = allArticles.filter((a) => a.notified);
       expect(notifiedArticles.length).toBeGreaterThanOrEqual(3);
     });
   });
@@ -77,7 +78,8 @@ describe('Approval Notification E2E', () => {
 
       await context.sendBatchNotification.execute();
 
-      const lastNotification = context.telegramNotification.getLastNotification();
+      const lastNotification =
+        context.telegramNotification.getLastNotification();
       expect(lastNotification).toBeNull();
     });
   });
@@ -116,7 +118,8 @@ describe('Approval Notification E2E', () => {
 
       await context.sendBatchNotification.execute();
 
-      const lastNotification = context.telegramNotification.getLastNotification();
+      const lastNotification =
+        context.telegramNotification.getLastNotification();
       expect(lastNotification).toBeNull();
     });
   });

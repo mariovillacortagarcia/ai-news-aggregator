@@ -17,6 +17,12 @@
     "paths": {
       "@ai-news-aggregator/ingestion-microservice/*": [
         "apps/ingestion-microservice/src/*"
+      ],
+      "@ai-news-aggregator/news-article": [
+        "libs/news-article/src/index.ts"
+      ],
+      "@ai-news-aggregator/news-article/*": [
+        "libs/news-article/src/*"
       ]
     }
   },

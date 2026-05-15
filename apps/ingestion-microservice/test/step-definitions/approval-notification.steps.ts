@@ -1,10 +1,6 @@
-import {
-  Given,
-  Then,
-  When,
-} from '@cucumber/cucumber';
+import { Given, Then, When } from '@cucumber/cucumber';
 import { CustomWorld } from '../support/custom-world';
-import { ArticleStatus, NewsArticle } from '../../src/core/domain/entities/news-article';
+import { ArticleStatus, NewsArticle } from '@ai-news-aggregator/news-article';
 import { ArticleNotificationData } from '../../src/core/domain/ports/telegram-notification.port';
 
 Given(
@@ -43,7 +39,7 @@ Given(
         status as ArticleStatus,
         false,
         new Date('2024-01-01T00:00:00Z'),
-        new Date('2024-01-01T00:00:00Z')
+        new Date('2024-01-01T00:00:00Z'),
       );
       this.articles.push(article);
       await this.articleRepository.save(article);
@@ -55,7 +51,7 @@ Given(
   '{int} of those articles have not been notified yet',
   async function (this: CustomWorld, unnotifiedCount: number) {
     const articlesToMarkAsNotified = this.articles.length - unnotifiedCount;
-    
+
     for (let i = 0; i < articlesToMarkAsNotified; i++) {
       this.articles[i].notify();
       await this.articleRepository.update(this.articles[i]);
@@ -81,7 +77,7 @@ When(
   async function (this: CustomWorld) {
     try {
       await this.sendNotificationUseCase.execute();
-      
+
       const lastNotification = this.telegramNotification.getLastNotification();
       if (lastNotification !== null && lastNotification.length > 0) {
         this.notificationSent = true;
@@ -111,10 +107,10 @@ Then(
     if (!this.lastNotificationArticles) {
       throw new Error('Expected notification articles to be available');
     }
-    
+
     if (this.lastNotificationArticles.length !== expectedCount) {
       throw new Error(
-        `Expected ${expectedCount} articles in notification but got ${this.lastNotificationArticles.length}`
+        `Expected ${expectedCount} articles in notification but got ${this.lastNotificationArticles.length}`,
       );
     }
   },
@@ -125,11 +121,11 @@ Then(
   async function (this: CustomWorld, count: number, status: string) {
     if (status === 'notified') {
       const allArticles = await this.articleRepository.find();
-      const notifiedArticles = allArticles.filter(a => a.notified);
-      
+      const notifiedArticles = allArticles.filter((a) => a.notified);
+
       if (notifiedArticles.length < count) {
         throw new Error(
-          `Expected at least ${count} articles to be marked as notified but got ${notifiedArticles.length}`
+          `Expected at least ${count} articles to be marked as notified but got ${notifiedArticles.length}`,
         );
       }
     }
@@ -142,7 +138,7 @@ Then(
     if (this.notificationSent) {
       throw new Error('Expected no notification to be sent but one was sent');
     }
-    
+
     const lastNotification = this.telegramNotification.getLastNotification();
     if (lastNotification !== null && lastNotification.length > 0) {
       throw new Error('Expected no notification articles but got some');

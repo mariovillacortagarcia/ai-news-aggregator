@@ -1,5 +1,5 @@
-import { ApproveArticleUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/approve-article.use-case';
-import { RejectArticleUseCase } from '@ai-news-aggregator/ingestion-microservice/core/application/use-cases/reject-article.use-case';
+import { ApproveArticleUseCase } from '../../core/application/use-cases/approve-article.use-case';
+import { RejectArticleUseCase } from '../../core/application/use-cases/reject-article.use-case';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { getTelegramConfig } from '../config/telegram.config';
@@ -28,6 +28,7 @@ export class TelegramApprovalScheduler {
   private readonly logger = new Logger(TelegramApprovalScheduler.name);
   private readonly config = getTelegramConfig();
   private lastUpdateId: number | null = null;
+  private isPolling = false;
 
   constructor(
     private readonly approveArticle: ApproveArticleUseCase,
@@ -41,7 +42,13 @@ export class TelegramApprovalScheduler {
       return;
     }
 
+    if (this.isPolling) {
+      this.logger.debug('Telegram polling already in progress - skipping');
+      return;
+    }
+
     this.logger.debug('Polling for Telegram updates...');
+    this.isPolling = true;
 
     try {
       const updates = await this.getUpdates();
@@ -59,6 +66,8 @@ export class TelegramApprovalScheduler {
       }
     } catch (error) {
       this.logger.error(`Telegram polling error: ${(error as Error).message}`);
+    } finally {
+      this.isPolling = false;
     }
   }
 

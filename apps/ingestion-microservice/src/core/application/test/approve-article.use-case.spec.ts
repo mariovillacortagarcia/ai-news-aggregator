@@ -1,8 +1,5 @@
-import { ArticleStatus, NewsArticle } from '../../domain/entities/news-article';
-import { InMemoryNewsArticleRepository } from '../../domain/test/mocks/in-memory-news-article.repository';
+import { ArticleStatus, NewsArticle, ArticleNotFoundError, ArgumentError, InMemoryNewsArticleRepository } from '@ai-news-aggregator/news-article';
 import { ApproveArticleUseCase } from '../use-cases/approve-article.use-case';
-import { ArticleNotFoundError } from '../../domain/errors/article-not-found.error';
-import { ArgumentError } from '../../domain/errors/argument.error';
 
 describe('ApproveArticleUseCase', () => {
   let useCase: ApproveArticleUseCase;

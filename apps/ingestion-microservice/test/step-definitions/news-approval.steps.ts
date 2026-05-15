@@ -1,8 +1,11 @@
 import { Given, Then, When } from '@cucumber/cucumber';
 import { CustomWorld } from '../support/custom-world';
-import { ArticleStatus, NewsArticle } from '../../src/core/domain/entities/news-article';
-import { ArticleNotFoundError } from '../../src/core/domain/errors/article-not-found.error';
-import { ArgumentError } from '../../src/core/domain/errors/argument.error';
+import {
+  ArticleNotFoundError,
+  ArticleStatus,
+  ArgumentError,
+  NewsArticle,
+} from '@ai-news-aggregator/news-article';
 
 interface NewsApprovalWorld extends CustomWorld {
   articleTitle: string;
@@ -22,9 +25,9 @@ Given(
       status as ArticleStatus,
       false,
       new Date('2024-01-01T00:00:00Z'),
-      new Date('2024-01-01T00:00:00Z')
+      new Date('2024-01-01T00:00:00Z'),
     );
-    
+
     this.articles = [article];
     await this.articleRepository.save(article);
     this.articleTitle = 'Test Article';
@@ -48,7 +51,7 @@ Given(
         existingArticle.status,
         existingArticle.notified,
         existingArticle.createdAt,
-        existingArticle.updatedAt
+        existingArticle.updatedAt,
       );
       await this.articleRepository.update(article);
       this.articles = [article];
@@ -80,7 +83,7 @@ Given(
         status as ArticleStatus,
         existingArticle.notified,
         existingArticle.createdAt,
-        existingArticle.updatedAt
+        existingArticle.updatedAt,
       );
       await this.articleRepository.update(article);
       this.articles = [article];
@@ -131,36 +134,34 @@ Then(
   'the article status should change to {string}',
   async function (this: NewsApprovalWorld, expectedStatus: string) {
     const updatedArticle = await this.articleRepository.findById('article-1');
-    
+
     if (!updatedArticle) {
       throw new Error('Article not found after update');
     }
-    
+
     if (updatedArticle.status !== expectedStatus) {
       throw new Error(
-        `Expected status ${expectedStatus} but got ${updatedArticle.status}`
+        `Expected status ${expectedStatus} but got ${updatedArticle.status}`,
       );
     }
   },
 );
 
-Then(
-  'the article should be updated',
-  async function (this: NewsApprovalWorld) {
-    const updatedArticle = await this.articleRepository.findById('article-1');
-    
-    if (!updatedArticle) {
-      throw new Error('Article not found after update');
-    }
-    
-    if (
-      this.originalArticleUpdatedAt &&
-      updatedArticle.updatedAt.getTime() <= this.originalArticleUpdatedAt.getTime()
-    ) {
-      throw new Error('Expected updatedAt timestamp to be updated');
-    }
-  },
-);
+Then('the article should be updated', async function (this: NewsApprovalWorld) {
+  const updatedArticle = await this.articleRepository.findById('article-1');
+
+  if (!updatedArticle) {
+    throw new Error('Article not found after update');
+  }
+
+  if (
+    this.originalArticleUpdatedAt &&
+    updatedArticle.updatedAt.getTime() <=
+      this.originalArticleUpdatedAt.getTime()
+  ) {
+    throw new Error('Expected updatedAt timestamp to be updated');
+  }
+});
 
 Then(
   'the article status should remain {string}',
@@ -173,7 +174,7 @@ Then(
 
     if (updatedArticle.status !== expectedStatus) {
       throw new Error(
-        `Expected status to remain ${expectedStatus} but got ${updatedArticle.status}`
+        `Expected status to remain ${expectedStatus} but got ${updatedArticle.status}`,
       );
     }
   },
@@ -183,14 +184,14 @@ Then(
   'the article should be available for downstream polling by the other microservices',
   async function (this: NewsApprovalWorld) {
     const updatedArticle = await this.articleRepository.findById('article-1');
-    
+
     if (!updatedArticle) {
       throw new Error('Article not found');
     }
-    
+
     if (updatedArticle.status !== ArticleStatus.APPROVED) {
       throw new Error(
-        `Expected article to be APPROVED for downstream polling but got ${updatedArticle.status}`
+        `Expected article to be APPROVED for downstream polling but got ${updatedArticle.status}`,
       );
     }
   },
@@ -200,13 +201,15 @@ Then(
   'the article should NOT be available for downstream polling',
   async function (this: NewsApprovalWorld) {
     const updatedArticle = await this.articleRepository.findById('article-1');
-    
+
     if (!updatedArticle) {
       throw new Error('Article not found');
     }
-    
+
     if (updatedArticle.status === ArticleStatus.APPROVED) {
-      throw new Error('Expected article to NOT be APPROVED for downstream polling');
+      throw new Error(
+        'Expected article to NOT be APPROVED for downstream polling',
+      );
     }
   },
 );
@@ -217,10 +220,10 @@ Then(
     if (!this.articleActionError) {
       throw new Error('Expected an approval error but got none');
     }
-    
+
     if (!(this.articleActionError instanceof ArgumentError)) {
       throw new Error(
-        `Expected ArgumentError but got ${this.articleActionError.constructor.name}`
+        `Expected ArgumentError but got ${this.articleActionError.constructor.name}`,
       );
     }
   },

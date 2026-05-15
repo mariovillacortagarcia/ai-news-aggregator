@@ -1,5 +1,4 @@
-import { ArticleStatus, NewsArticle } from '../../domain/entities/news-article';
-import { InMemoryNewsArticleRepository } from '../../domain/test/mocks/in-memory-news-article.repository';
+import { ArticleStatus, NewsArticle, InMemoryNewsArticleRepository } from '@ai-news-aggregator/news-article';
 import { InMemoryTelegramNotificationRepository } from '../../domain/test/mocks/in-memory-telegram-notification.repository';
 import { SendBatchNotificationUseCase } from '../use-cases/send-batch-notification.use-case';
 import { GetArticlesToNotifyUseCase } from '../use-cases/get-articles-to-notify.use-case';
