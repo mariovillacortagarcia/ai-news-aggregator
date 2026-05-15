@@ -21,6 +21,7 @@ libs/news-article/src/
 ## Exports
 
 ### Domain
+
 - `NewsArticle` - Core domain entity
 - `ArticleStatus` - Article status enum (CANDIDATE, APPROVED, REJECTED)
 - `NewsArticleRepositoryPort` - Repository interface
@@ -28,6 +29,7 @@ libs/news-article/src/
 - `ArgumentError` - Validation error
 
 ### Infrastructure
+
 - `NewsArticleSupabaseClientProvider` - Supabase client provider
 - `SupabaseNewsArticleRepository` - Supabase implementation of repository
 - `NewsArticlePersistenceModule` - NestJS module for persistence
@@ -35,11 +37,7 @@ libs/news-article/src/
 ## Usage
 
 ```typescript
-import {
-  NewsArticle,
-  NewsArticleRepositoryPort,
-  NewsArticlePersistenceModule,
-} from '@ai-news-aggregator/news-article';
+import { NewsArticle, NewsArticleRepositoryPort, NewsArticlePersistenceModule } from '@ai-news-aggregator/news-article';
 
 @Module({
   imports: [NewsArticlePersistenceModule],
@@ -50,10 +48,11 @@ export class MyModule {}
 ## Configuration
 
 The Supabase provider requires the following environment variables:
+
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key
 - `SUPABASE_NEWS_ARTICLES_TABLE` - Table name (default: 'news_articles')
 
 ## Application Layer
 
-Los casos de uso de aplicación (ApproveArticleUseCase, RejectArticleUseCase, GetArticlesToNotifyUseCase) son específicos de cada microservicio y se encuentran en `apps/ingestion-microservice/src/core/application/use-cases/`.
+Application use cases (ApproveArticleUseCase, RejectArticleUseCase, GetArticlesToNotifyUseCase) are specific to each microservice and are located in `apps/ingestion-microservice/src/core/application/use-cases/`.

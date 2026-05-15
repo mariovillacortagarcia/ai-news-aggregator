@@ -15,10 +15,10 @@ export class NewsArticleSupabaseClientProvider {
 
   constructor() {
     const config = this.loadConfigFromEnv();
-    
+
     if (!config.url || !config.serviceRoleKey) {
       this.logger.warn('Supabase not fully configured - using mock client');
-      this.client = null as any;
+      this.client = this.createUnconfiguredClient();
       this.newsArticlesTable = 'news_articles';
     } else {
       this.client = createClient(config.url, config.serviceRoleKey);
@@ -31,8 +31,19 @@ export class NewsArticleSupabaseClientProvider {
     return {
       url: process.env['SUPABASE_URL'] || '',
       serviceRoleKey: process.env['SUPABASE_SERVICE_ROLE_KEY'] || '',
-      newsArticlesTable: process.env['SUPABASE_NEWS_ARTICLES_TABLE'] || 'news_articles',
+      newsArticlesTable:
+        process.env['SUPABASE_NEWS_ARTICLES_TABLE'] || 'news_articles',
     };
+  }
+
+  private createUnconfiguredClient(): SupabaseClient {
+    return {
+      from: () => {
+        throw new Error(
+          'Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.',
+        );
+      },
+    } as unknown as SupabaseClient;
   }
 
   getClient(): SupabaseClient {

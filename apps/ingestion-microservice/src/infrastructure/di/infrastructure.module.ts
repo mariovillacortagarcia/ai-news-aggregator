@@ -5,5 +5,6 @@ import { SchedulingModule } from './scheduling.module';
 
 @Module({
   imports: [PersistenceModule, MessagingModule, SchedulingModule],
+  exports: [PersistenceModule, MessagingModule, SchedulingModule],
 })
 export class InfrastructureModule {}

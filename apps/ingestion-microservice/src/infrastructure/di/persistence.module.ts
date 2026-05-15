@@ -4,14 +4,25 @@ import { SupabasePullSourceRepository } from '../adapters/persistence/supabase-p
 import { RssPullSourceExtractor } from '../adapters/extractors/rss-pull-source.extractor';
 import { HtmlPullSourceExtractor } from '../adapters/extractors/html-pull-source.extractor';
 import { PullSourceExtractorFactory } from '../adapters/extractors/pull-source-extractor.factory';
-import { NewsArticlePersistenceModule } from '@ai-news-aggregator/news-article';
+import {
+  NewsArticleRepositoryPort,
+  NewsArticleSupabaseClientProvider,
+  SupabaseNewsArticleRepository,
+} from '@ai-news-aggregator/news-article';
 import { PullSourceRepositoryPort } from '../../core/domain/ports/pull-source-repository.port';
 import { PullSourceExtractorPort } from '../../core/domain/ports/pull-source-extractor.port';
 
 @Module({
-  imports: [NewsArticlePersistenceModule],
   providers: [
     SupabaseClientProvider,
+    {
+      provide: NewsArticleSupabaseClientProvider,
+      useExisting: SupabaseClientProvider,
+    },
+    {
+      provide: NewsArticleRepositoryPort,
+      useClass: SupabaseNewsArticleRepository,
+    },
     {
       provide: PullSourceRepositoryPort,
       useClass: SupabasePullSourceRepository,
@@ -26,7 +37,7 @@ import { PullSourceExtractorPort } from '../../core/domain/ports/pull-source-ext
     },
   ],
   exports: [
-    NewsArticlePersistenceModule,
+    NewsArticleRepositoryPort,
     PullSourceRepositoryPort,
     PullSourceExtractorPort,
   ],
