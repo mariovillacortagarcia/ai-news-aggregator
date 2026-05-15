@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NewsArticleRepositoryPort } from '../../domain/ports/news-article-repository.port';
-import { ArticleNotFoundError } from '../../domain/errors/article-not-found.error';
+import { NewsArticleRepositoryPort, ArticleNotFoundError } from '@ai-news-aggregator/news-article';
 
 @Injectable()
 export class ApproveArticleUseCase {

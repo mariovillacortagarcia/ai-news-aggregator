@@ -1,5 +1,8 @@
-import { ArticleStatus, NewsArticle } from '@ai-news-aggregator/ingestion-microservice/core/domain/entities/news-article';
-import { ArgumentError } from '@ai-news-aggregator/ingestion-microservice/core/domain/errors/argument.error';
+import {
+  ArticleStatus,
+  ArgumentError,
+  NewsArticle,
+} from '@ai-news-aggregator/news-article';
 import {
   IngestionE2eContext,
   createIngestionE2eApp,
@@ -39,10 +42,13 @@ describe('News Approval E2E', () => {
 
       await context.approveArticle.execute('article-1');
 
-      const updatedArticle = await context.articleRepository.findById('article-1');
+      const updatedArticle =
+        await context.articleRepository.findById('article-1');
       expect(updatedArticle).not.toBeNull();
       expect(updatedArticle?.status).toBe(ArticleStatus.APPROVED);
-      expect(updatedArticle?.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+      expect(updatedArticle?.updatedAt.getTime()).toBeGreaterThan(
+        originalUpdatedAt.getTime(),
+      );
     });
 
     it('should make article available for downstream polling', async () => {
@@ -63,7 +69,8 @@ describe('News Approval E2E', () => {
 
       await context.approveArticle.execute('article-1');
 
-      const updatedArticle = await context.articleRepository.findById('article-1');
+      const updatedArticle =
+        await context.articleRepository.findById('article-1');
       expect(updatedArticle?.status).toBe(ArticleStatus.APPROVED);
     });
   });
@@ -89,10 +96,13 @@ describe('News Approval E2E', () => {
 
       await context.rejectArticle.execute('article-1');
 
-      const updatedArticle = await context.articleRepository.findById('article-1');
+      const updatedArticle =
+        await context.articleRepository.findById('article-1');
       expect(updatedArticle).not.toBeNull();
       expect(updatedArticle?.status).toBe(ArticleStatus.REJECTED);
-      expect(updatedArticle?.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+      expect(updatedArticle?.updatedAt.getTime()).toBeGreaterThan(
+        originalUpdatedAt.getTime(),
+      );
     });
 
     it('should make article NOT available for downstream polling', async () => {
@@ -113,7 +123,8 @@ describe('News Approval E2E', () => {
 
       await context.rejectArticle.execute('article-1');
 
-      const updatedArticle = await context.articleRepository.findById('article-1');
+      const updatedArticle =
+        await context.articleRepository.findById('article-1');
       expect(updatedArticle?.status).toBe(ArticleStatus.REJECTED);
     });
   });
@@ -135,12 +146,15 @@ describe('News Approval E2E', () => {
       );
       await context.articleRepository.save(article);
 
-      await expect(context.approveArticle.execute('article-1')).rejects.toThrow(ArgumentError);
+      await expect(context.approveArticle.execute('article-1')).rejects.toThrow(
+        ArgumentError,
+      );
       await expect(context.approveArticle.execute('article-1')).rejects.toThrow(
         'Cannot approve an article with status REJECTED',
       );
 
-      const updatedArticle = await context.articleRepository.findById('article-1');
+      const updatedArticle =
+        await context.articleRepository.findById('article-1');
       expect(updatedArticle?.status).toBe(ArticleStatus.REJECTED);
     });
 
@@ -168,7 +182,9 @@ describe('News Approval E2E', () => {
       }
 
       expect(error).toBeInstanceOf(ArgumentError);
-      expect(error?.message).toBe('Cannot approve an article with status REJECTED');
+      expect(error?.message).toBe(
+        'Cannot approve an article with status REJECTED',
+      );
     });
 
     it('should keep article NOT available for downstream polling', async () => {
@@ -193,7 +209,8 @@ describe('News Approval E2E', () => {
         // Expected error
       }
 
-      const updatedArticle = await context.articleRepository.findById('article-1');
+      const updatedArticle =
+        await context.articleRepository.findById('article-1');
       expect(updatedArticle?.status).toBe(ArticleStatus.REJECTED);
     });
   });

@@ -1,4 +1,4 @@
-import { ArticleStatus, NewsArticle } from '@ai-news-aggregator/ingestion-microservice/core/domain/entities/news-article';
+import { ArticleStatus, NewsArticle } from '@ai-news-aggregator/news-article';
 import { RssPullSource } from '@ai-news-aggregator/ingestion-microservice/core/domain/entities/pull-source';
 import { ExtractedArticleData } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/pull-source-extractor.port';
 import {
@@ -106,13 +106,17 @@ describe('Pull Ingestion E2E', () => {
       );
       await context.pullSourceRepository.save(source);
 
-      context.pullSourceExtractor.setError('SOURCE_EXTRACTION_ERROR: Failed to extract');
+      context.pullSourceExtractor.setError(
+        'SOURCE_EXTRACTION_ERROR: Failed to extract',
+      );
 
       const result = await context.processScheduledPull.execute();
 
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].sourceId).toBe('source-1');
-      expect(result.errors[0].error.message).toContain('SOURCE_EXTRACTION_ERROR');
+      expect(result.errors[0].error.message).toContain(
+        'SOURCE_EXTRACTION_ERROR',
+      );
 
       const articles = await context.articleRepository.find();
       expect(articles).toHaveLength(0);
@@ -157,10 +161,13 @@ describe('Pull Ingestion E2E', () => {
 
       const result = await context.processScheduledPull.execute();
 
-      expect(result.success.length + result.errors.length).toBeGreaterThanOrEqual(1);
+      expect(
+        result.success.length + result.errors.length,
+      ).toBeGreaterThanOrEqual(1);
 
       for (const sourceId of ['source-1', 'source-2', 'source-3']) {
-        const updatedSource = await context.pullSourceRepository.findById(sourceId);
+        const updatedSource =
+          await context.pullSourceRepository.findById(sourceId);
         expect(updatedSource?.lastPolledAt).not.toBeNull();
       }
     });

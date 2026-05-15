@@ -1,12 +1,15 @@
+import {
+  ArticleStatus,
+  InMemoryNewsArticleRepository,
+  NewsArticle,
+} from '@ai-news-aggregator/news-article';
 import { Before, Given, Then, When } from '@cucumber/cucumber';
-import { CustomWorld } from '../support/custom-world';
-import { ArticleStatus, NewsArticle } from '../../src/core/domain/entities/news-article';
-import { RssPullSource, PullSource } from '../../src/core/domain/entities/pull-source';
-import { ExtractedArticleData } from '../../src/core/domain/ports/pull-source-extractor.port';
-import { InMemoryPullSourceRepository } from '../../src/core/domain/test/mocks/in-memory-pull-source.repository';
-import { InMemoryNewsArticleRepository } from '../../src/core/domain/test/mocks/in-memory-news-article.repository';
-import { InMemoryPullSourceExtractor } from '../../src/core/domain/test/mocks/in-memory-pull-source.extractor';
 import { ProcessScheduledPullUseCase } from '../../src/core/application/use-cases/process-scheduled-pull.use-case';
+import { RssPullSource } from '../../src/core/domain/entities/pull-source';
+import { ExtractedArticleData } from '../../src/core/domain/ports/pull-source-extractor.port';
+import { InMemoryPullSourceExtractor } from '../../src/core/domain/test/mocks/in-memory-pull-source.extractor';
+import { InMemoryPullSourceRepository } from '../../src/core/domain/test/mocks/in-memory-pull-source.repository';
+import { CustomWorld } from '../support/custom-world';
 
 interface PullIngestionWorld extends CustomWorld {
   pullSourceRepository: InMemoryPullSourceRepository;
@@ -22,9 +25,9 @@ Before(function (this: PullIngestionWorld) {
   this.processScheduledPull = new ProcessScheduledPullUseCase(
     this.pullSourceRepository,
     this.newsArticleRepository,
-    this.pullSourceExtractor
+    this.pullSourceExtractor,
   );
-  
+
   this.articles = [];
   this.pullSources = [];
   this.savedArticles = [];
@@ -42,7 +45,7 @@ Given(
       'source-1',
       new Date(Date.now() - 600000),
       true,
-      'https://example.com'
+      'https://example.com',
     );
     this.pullSources = [source];
     await this.pullSourceRepository.save(source);
@@ -56,7 +59,7 @@ Given(
       'source-1',
       new Date(Date.now() - 600000),
       true,
-      'https://example.com'
+      'https://example.com',
     );
     this.pullSources = [source];
     await this.pullSourceRepository.save(source);
@@ -95,7 +98,7 @@ Given(
       ArticleStatus.CANDIDATE,
       false,
       new Date(),
-      new Date()
+      new Date(),
     );
     this.articles.push(existingArticle);
     await this.newsArticleRepository.save(existingArticle);
@@ -117,7 +120,7 @@ Given(
       'source-1',
       new Date(Date.now() - 600000),
       true,
-      'https://example.com'
+      'https://example.com',
     );
     this.pullSources = [source];
     await this.pullSourceRepository.save(source);
@@ -131,13 +134,15 @@ Given(
       'source-1',
       new Date(Date.now() - 600000),
       true,
-      'https://example.com'
+      'https://example.com',
     );
     this.pullSources = [source];
     this.sourceExtractionErrors.add(source.id);
     await this.pullSourceRepository.save(source);
 
-    this.pullSourceExtractor.setError('SOURCE_EXTRACTION_ERROR: Failed to extract content');
+    this.pullSourceExtractor.setError(
+      'SOURCE_EXTRACTION_ERROR: Failed to extract content',
+    );
   },
 );
 
@@ -149,19 +154,19 @@ Given(
         'source-1',
         new Date(Date.now() - 600000),
         true,
-        'https://example.com'
+        'https://example.com',
       ),
       new RssPullSource(
         'source-2',
         new Date(Date.now() - 1200000),
         true,
-        'https://another-example.com'
+        'https://another-example.com',
       ),
       new RssPullSource(
         'source-3',
         new Date(Date.now() - 1800000),
         true,
-        'https://third-source.com'
+        'https://third-source.com',
       ),
     ];
 
@@ -176,11 +181,11 @@ When(
   async function (this: PullIngestionWorld) {
     try {
       this.processResult = await this.processScheduledPull.execute();
-      
+
       if (this.processResult.errors.length > 0) {
         this.ingestionError = this.processResult.errors[0].error;
       }
-      
+
       this.processingCompleted = true;
     } catch (error) {
       this.ingestionError = error as Error;
@@ -194,11 +199,11 @@ When(
   async function (this: PullIngestionWorld) {
     try {
       this.processResult = await this.processScheduledPull.execute();
-      
+
       if (this.processResult.errors.length > 0) {
         this.ingestionError = this.processResult.errors[0].error;
       }
-      
+
       this.processingCompleted = true;
     } catch (error) {
       this.ingestionError = error as Error;
@@ -211,7 +216,9 @@ Then(
   'the system should extract the news content successfully',
   async function (this: PullIngestionWorld) {
     if (this.ingestionError !== null) {
-      throw new Error(`Expected no error but got: ${this.ingestionError?.message}`);
+      throw new Error(
+        `Expected no error but got: ${this.ingestionError?.message}`,
+      );
     }
   },
 );
@@ -220,23 +227,20 @@ Then(
   'a new article with status {string} should be created',
   async function (this: PullIngestionWorld, status: string) {
     const allArticles = await this.newsArticleRepository.find();
-    const newArticles = allArticles.filter(a => a.status === status);
-    
+    const newArticles = allArticles.filter((a) => a.status === status);
+
     if (newArticles.length === 0) {
       throw new Error(`Expected at least one article with status ${status}`);
     }
   },
 );
 
-Then(
-  'the article should be saved',
-  async function (this: PullIngestionWorld) {
-    const allArticles = await this.newsArticleRepository.find();
-    if (allArticles.length === 0) {
-      throw new Error('Expected at least one article to be saved');
-    }
-  },
-);
+Then('the article should be saved', async function (this: PullIngestionWorld) {
+  const allArticles = await this.newsArticleRepository.find();
+  if (allArticles.length === 0) {
+    throw new Error('Expected at least one article to be saved');
+  }
+});
 
 Then(
   'the system should identify the article as a duplicate',
@@ -267,7 +271,7 @@ Then(
     }
     if (!this.ingestionError.message.includes('SOURCE_EXTRACTION_ERROR')) {
       throw new Error(
-        `Expected SOURCE_EXTRACTION_ERROR in message but got: ${this.ingestionError.message}`
+        `Expected SOURCE_EXTRACTION_ERROR in message but got: ${this.ingestionError.message}`,
       );
     }
   },
@@ -297,8 +301,9 @@ Then(
     if (!this.processResult) {
       throw new Error('Expected process result to be available');
     }
-    
-    const totalProcessed = this.processResult.success.length + this.processResult.errors.length;
+
+    const totalProcessed =
+      this.processResult.success.length + this.processResult.errors.length;
     if (totalProcessed === 0 && this.pullSources.length > 0) {
       throw new Error('Expected sources to be processed');
     }
@@ -311,7 +316,9 @@ Then(
     for (const source of this.pullSources) {
       const found = await this.pullSourceRepository.findById(source.id);
       if (!found || found.lastPolledAt === null) {
-        throw new Error(`Expected timestamp to be updated for source ${source.id}`);
+        throw new Error(
+          `Expected timestamp to be updated for source ${source.id}`,
+        );
       }
     }
   },

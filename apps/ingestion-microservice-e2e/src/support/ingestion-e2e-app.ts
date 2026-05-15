@@ -2,11 +2,13 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '@ai-news-aggregator/ingestion-microservice/app/app.module';
 import { SupabaseClientProvider } from '@ai-news-aggregator/ingestion-microservice/infrastructure/config/supabase-client.provider';
-import { InMemoryNewsArticleRepository } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-news-article.repository';
 import { InMemoryPullSourceRepository } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-pull-source.repository';
 import { InMemoryPullSourceExtractor } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-pull-source.extractor';
 import { InMemoryTelegramNotificationRepository } from '@ai-news-aggregator/ingestion-microservice/core/domain/test/mocks/in-memory-telegram-notification.repository';
-import { NewsArticleRepositoryPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/news-article-repository.port';
+import {
+  InMemoryNewsArticleRepository,
+  NewsArticleRepositoryPort,
+} from '@ai-news-aggregator/news-article';
 import { PullSourceRepositoryPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/pull-source-repository.port';
 import { PullSourceExtractorPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/pull-source-extractor.port';
 import { TelegramNotificationPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/telegram-notification.port';
@@ -82,7 +84,9 @@ export async function createIngestionE2eApp(): Promise<IngestionE2eContext> {
   };
 }
 
-export async function resetIngestionE2eContext(context: IngestionE2eContext): Promise<void> {
+export async function resetIngestionE2eContext(
+  context: IngestionE2eContext,
+): Promise<void> {
   context.articleRepository.clear();
   context.pullSourceRepository.clear();
   context.pullSourceExtractor.clear();

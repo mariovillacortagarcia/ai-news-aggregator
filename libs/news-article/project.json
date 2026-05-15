@@ -1,0 +1,28 @@
+{
+  "name": "news-article",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/news-article/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared"],
+  "implicitDependencies": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/news-article",
+        "main": "libs/news-article/src/index.ts",
+        "tsConfig": "libs/news-article/tsconfig.lib.json",
+        "assets": ["libs/news-article/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "passWithNoTests": true,
+        "jestConfig": "libs/news-article/jest.config.ts"
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@
   "sourceRoot": "apps/ingestion-microservice/src",
   "projectType": "application",
   "tags": [],
+  "implicitDependencies": ["news-article"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",

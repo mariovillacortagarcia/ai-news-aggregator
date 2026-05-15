@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PullSourceRepositoryPort } from '../../domain/ports/pull-source-repository.port';
-import { NewsArticleRepositoryPort } from '../../domain/ports/news-article-repository.port';
+import { NewsArticleRepositoryPort, NewsArticle, ArticleStatus } from '@ai-news-aggregator/news-article';
 import { PullSourceExtractorPort } from '../../domain/ports/pull-source-extractor.port';
-import { NewsArticle, ArticleStatus } from '../../domain/entities/news-article';
 import { PullSource } from '../../domain/entities/pull-source';
 
 @Injectable()

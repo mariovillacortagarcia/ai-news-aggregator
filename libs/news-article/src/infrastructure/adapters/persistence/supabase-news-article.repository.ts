@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NewsArticleRepositoryPort } from '@ai-news-aggregator/ingestion-microservice/core/domain/ports/news-article-repository.port';
-import { NewsArticle, ArticleStatus } from '@ai-news-aggregator/ingestion-microservice/core/domain/entities/news-article';
-import { SupabaseClientProvider } from '../../config/supabase-client.provider';
+import { NewsArticleRepositoryPort } from '../../../core/domain/ports/news-article-repository.port';
+import { NewsArticle, ArticleStatus } from '../../../core/domain/entities/news-article';
+import { NewsArticleSupabaseClientProvider } from '../../config/supabase-client.provider';
 
 interface NewsArticleDbRecord {
   id: string;
@@ -21,7 +21,7 @@ interface NewsArticleDbRecord {
 export class SupabaseNewsArticleRepository implements NewsArticleRepositoryPort {
   private readonly logger = new Logger(SupabaseNewsArticleRepository.name);
 
-  constructor(private readonly supabaseClient: SupabaseClientProvider) {}
+  constructor(private readonly supabaseClient: NewsArticleSupabaseClientProvider) {}
 
   async findById(id: string): Promise<NewsArticle | null> {
     const client = this.supabaseClient.getClient();

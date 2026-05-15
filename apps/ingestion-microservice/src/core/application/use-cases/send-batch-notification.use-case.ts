@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
-import { NewsArticleRepositoryPort } from '../../domain/ports/news-article-repository.port';
-import { TelegramNotificationPort } from '../../domain/ports/telegram-notification.port';
+import { NewsArticleRepositoryPort } from '@ai-news-aggregator/news-article';
 import { GetArticlesToNotifyUseCase } from './get-articles-to-notify.use-case';
+import { TelegramNotificationPort } from '../../domain/ports/telegram-notification.port';
 import { SendNotificationError } from '../../domain/errors/send-notification.error';
 
 @Injectable()

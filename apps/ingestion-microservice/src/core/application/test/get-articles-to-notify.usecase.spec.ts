@@ -1,7 +1,5 @@
-import { ArticleStatus, NewsArticle } from "../../domain/entities/news-article";
-import { NewsArticleRepositoryPort } from "../../domain/ports/news-article-repository.port";
-import { InMemoryNewsArticleRepository } from "../../domain/test/mocks/in-memory-news-article.repository";
-import { GetArticlesToNotifyUseCase } from "../use-cases/get-articles-to-notify.use-case";
+import { ArticleStatus, NewsArticle, NewsArticleRepositoryPort, InMemoryNewsArticleRepository } from '@ai-news-aggregator/news-article';
+import { GetArticlesToNotifyUseCase } from '../use-cases/get-articles-to-notify.use-case';
 
 describe('GetArticlesToNotifyUseCase', () => {
   let repository: InMemoryNewsArticleRepository;

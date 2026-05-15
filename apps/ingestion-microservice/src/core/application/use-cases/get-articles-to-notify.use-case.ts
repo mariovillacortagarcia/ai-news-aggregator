@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
-import { ArticleStatus, NewsArticle } from '../../domain/entities/news-article';
-import { NewsArticleRepositoryPort } from '../../domain/ports/news-article-repository.port';
+import { NewsArticleRepositoryPort, NewsArticle, ArticleStatus } from '@ai-news-aggregator/news-article';
 
 @Injectable()
 export class GetArticlesToNotifyUseCase {
