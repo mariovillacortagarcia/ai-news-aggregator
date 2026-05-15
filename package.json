@@ -13,6 +13,15 @@
     "e2e:ingestion:watch": "npx nx e2e ingestion-microservice-e2e --watch",
     "lint:ingestion": "npx nx lint ingestion-microservice",
     "cucumber:ingestion": "npx nx run ingestion-microservice:test:e2e",
+    "build:agents": "npx nx build agents-microservice",
+    "start:agents": "npm run build:agents && /bin/zsh -lc 'set -a; source .env; set +a; node dist/apps/agents-microservice/main.js'",
+    "dev:agents": "npx nx serve agents-microservice",
+    "test:agents": "npx nx test agents-microservice",
+    "test:agents:watch": "npx nx test agents-microservice --watch",
+    "test:agents:coverage": "npx nx test agents-microservice --coverage",
+    "e2e:agents": "npx nx e2e agents-microservice-e2e",
+    "e2e:agents:watch": "npx nx e2e agents-microservice-e2e --watch",
+    "cucumber:agents": "npx nx run agents-microservice:test:e2e",
     "build:all": "npx nx run-many -t build",
     "test:all": "npx nx run-many -t test",
     "e2e:all": "npx nx run-many -t e2e"
@@ -21,6 +30,7 @@
   "dependencies": {
     "@langchain/core": "1.1.46",
     "@langchain/langgraph": "1.3.0",
+    "@langchain/openai": "1.4.5",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",

@@ -779,4 +779,83 @@ describe('NewsArticle', () => {
       );
     });
   });
+
+  describe('generatedSummary', () => {
+    it('should default generatedSummary to null', () => {
+      const newsArticle = new NewsArticle(
+        'article-123',
+        'https://example.com/article',
+        'Example Article',
+        'This is an example article.',
+        'John Doe',
+        'https://example.com/image.jpg',
+        'source-123'
+      );
+
+      expect(newsArticle.generatedSummary).toBeNull();
+      expect(newsArticle.summarized).toBe(false);
+    });
+
+    it('should expose the generated summary when provided in the constructor', () => {
+      const newsArticle = new NewsArticle(
+        'article-123',
+        'https://example.com/article',
+        'Example Article',
+        'This is an example article.',
+        'John Doe',
+        'https://example.com/image.jpg',
+        'source-123',
+        ArticleStatus.APPROVED,
+        false,
+        new Date(),
+        new Date(),
+        'Generated summary'
+      );
+
+      expect(newsArticle.generatedSummary).toBe('Generated summary');
+      expect(newsArticle.summarized).toBe(true);
+    });
+  });
+
+  describe('summarize', () => {
+    it('should store a generated summary and update the timestamp', () => {
+      const before = new Date('2024-01-01T00:00:00Z');
+      const newsArticle = new NewsArticle(
+        'article-123',
+        'https://example.com/article',
+        'Example Article',
+        'This is an example article.',
+        'John Doe',
+        'https://example.com/image.jpg',
+        'source-123',
+        ArticleStatus.APPROVED,
+        false,
+        before,
+        before
+      );
+
+      newsArticle.summarize('Generated summary');
+
+      expect(newsArticle.generatedSummary).toBe('Generated summary');
+      expect(newsArticle.summarized).toBe(true);
+      expect(newsArticle.updatedAt.getTime()).toBeGreaterThan(before.getTime());
+    });
+
+    it('should reject empty generated summaries', () => {
+      const newsArticle = new NewsArticle(
+        'article-123',
+        'https://example.com/article',
+        'Example Article',
+        'This is an example article.',
+        'John Doe',
+        'https://example.com/image.jpg',
+        'source-123',
+        ArticleStatus.APPROVED
+      );
+
+      expect(() => newsArticle.summarize('   ')).toThrow(
+        new ArgumentError('NewsArticle summary cannot be empty')
+      );
+    });
+  });
 });

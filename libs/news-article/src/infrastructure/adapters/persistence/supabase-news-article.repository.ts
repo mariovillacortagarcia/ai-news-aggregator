@@ -13,6 +13,7 @@ interface NewsArticleDbRecord {
   pull_source_id: string;
   status: string;
   notified: boolean;
+  generated_summary: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -168,6 +169,7 @@ export class SupabaseNewsArticleRepository implements NewsArticleRepositoryPort 
       record.notified,
       new Date(record.created_at),
       new Date(record.updated_at),
+      record.generated_summary,
     );
   }
 
@@ -182,6 +184,7 @@ export class SupabaseNewsArticleRepository implements NewsArticleRepositoryPort 
       pull_source_id: article.pullSourceId,
       status: article.status,
       notified: article.notified,
+      generated_summary: article.generatedSummary,
       created_at: article.createdAt.toISOString(),
       updated_at: article.updatedAt.toISOString(),
     };

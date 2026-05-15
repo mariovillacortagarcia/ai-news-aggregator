@@ -8,6 +8,7 @@ export enum ArticleStatus {
 
 export class NewsArticle {
   private readonly _mainImageUrl: string;
+  private _generatedSummary: string | null;
 
   constructor(
     private readonly _id: string,
@@ -21,6 +22,7 @@ export class NewsArticle {
     private _notified: boolean = false,
     private readonly _createdAt: Date = new Date(),
     private _updatedAt: Date = new Date(),
+    generatedSummary?: string | null,
   ) {
     if (!_id || _id.trim() === '') {
       throw new ArgumentError('NewsArticle id cannot be empty');
@@ -50,6 +52,7 @@ export class NewsArticle {
     if (!_updatedAt) {
       throw new ArgumentError('NewsArticle updatedAt cannot be null');
     }
+    this._generatedSummary = this.normalizeGeneratedSummary(generatedSummary);
   }
 
   get id(): string {
@@ -96,8 +99,27 @@ export class NewsArticle {
     return this._updatedAt;
   }
 
+  get generatedSummary(): string | null {
+    return this._generatedSummary;
+  }
+
+  get summarized(): boolean {
+    return this._generatedSummary !== null;
+  }
+
   notify(): void {
     this._notified = true;
+    this._updatedAt = new Date();
+  }
+
+  summarize(summary: string): void {
+    const normalizedSummary = this.normalizeGeneratedSummary(summary);
+
+    if (!normalizedSummary) {
+      throw new ArgumentError('NewsArticle summary cannot be empty');
+    }
+
+    this._generatedSummary = normalizedSummary;
     this._updatedAt = new Date();
   }
 
@@ -121,5 +143,11 @@ export class NewsArticle {
     }
     this._status = ArticleStatus.REJECTED;
     this._updatedAt = new Date();
+  }
+
+  private normalizeGeneratedSummary(summary?: string | null): string | null {
+    const normalizedSummary = summary?.trim() ?? '';
+
+    return normalizedSummary === '' ? null : normalizedSummary;
   }
 }
