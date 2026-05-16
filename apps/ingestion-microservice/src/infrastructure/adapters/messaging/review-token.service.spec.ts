@@ -35,4 +35,24 @@ describe('ReviewTokenService', () => {
       'Invalid review token signature',
     );
   });
+
+  it('should reject missing review jwt values', () => {
+    const service = new ReviewTokenService();
+
+    expect(() => service.verifyReviewJwt('')).toThrow('Missing review token');
+  });
+
+  it('should reject jwt creation when the secret is not configured', () => {
+    process.env = {
+      ...originalEnv,
+      NOTIFICATION_JWT_SECRET: '',
+      NOTIFICATION_JWT_TTL_SECONDS: '3600',
+    };
+
+    const service = new ReviewTokenService();
+
+    expect(() =>
+      service.createReviewJwt('editor@example.com', ['a1']),
+    ).toThrow('JWT secret is not configured');
+  });
 });

@@ -30,14 +30,23 @@ export class ReviewController {
   @Get()
   @Header('Content-Type', 'text/html; charset=utf-8')
   async getReviewPage(@Query('reviewJwt') reviewJwt: string): Promise<string> {
-    const payload = this.reviewTokenService.verifyReviewJwt(reviewJwt);
-    const pendingArticles = await this.getPendingArticles(payload.articleIds);
+    try {
+      const payload = this.reviewTokenService.verifyReviewJwt(reviewJwt);
+      const pendingArticles = await this.getPendingArticles(payload.articleIds);
 
-    if (pendingArticles.length === 0) {
-      return this.renderResultPage('All batch articles have already been reviewed.');
+      if (pendingArticles.length === 0) {
+        return this.renderResultPage(
+          'All batch articles have already been reviewed.',
+        );
+      }
+
+      return this.renderReviewPage(reviewJwt, pendingArticles);
+    } catch (error) {
+      return this.renderErrorPage(
+        'Invalid or expired review link',
+        (error as Error).message,
+      );
     }
-
-    return this.renderReviewPage(reviewJwt, pendingArticles);
   }
 
   @Post('actions')
@@ -51,42 +60,75 @@ export class ReviewController {
       throw new BadRequestException('Invalid action');
     }
 
-    const payload = this.reviewTokenService.verifyReviewJwt(reviewJwt);
-    const selectedIds = this.normalizeSelectedArticleIds(articleIds);
+    try {
+      const payload = this.reviewTokenService.verifyReviewJwt(reviewJwt);
+      const selectedIds = this.normalizeSelectedArticleIds(articleIds);
 
-    if (selectedIds.length === 0) {
-      throw new BadRequestException('At least one article must be selected');
-    }
-
-    const invalidArticleId = selectedIds.find(
-      (articleId) => !payload.articleIds.includes(articleId),
-    );
-
-    if (invalidArticleId) {
-      throw new BadRequestException('Invalid article selection');
-    }
-
-    for (const articleId of selectedIds) {
-      if (action === 'approve') {
-        await this.approveArticle.execute(articleId);
-      } else {
-        await this.rejectArticle.execute(articleId);
+      if (selectedIds.length === 0) {
+        throw new BadRequestException('At least one article must be selected');
       }
-    }
 
-    const pendingArticles = await this.getPendingArticles(payload.articleIds);
+      const invalidArticleId = selectedIds.find(
+        (articleId) => !payload.articleIds.includes(articleId),
+      );
 
-    if (pendingArticles.length === 0) {
-      return this.renderResultPage(
-        `${selectedIds.length} article(s) processed with action ${this.escapeHtml(action)}. No pending articles remain in this batch.`,
+      if (invalidArticleId) {
+        throw new BadRequestException('Invalid article selection');
+      }
+
+      const results = await Promise.allSettled(
+        selectedIds.map((articleId) =>
+          action === 'approve'
+            ? this.approveArticle.execute(articleId)
+            : this.rejectArticle.execute(articleId),
+        ),
+      );
+      const failedResults = results.filter(
+        (result): result is PromiseRejectedResult => result.status === 'rejected',
+      );
+
+      const pendingArticles = await this.getPendingArticles(payload.articleIds);
+      const processedCount = selectedIds.length - failedResults.length;
+
+      if (failedResults.length > 0) {
+        const errorMessage = failedResults
+          .map((result) => (result.reason as Error).message)
+          .join('; ');
+
+        if (pendingArticles.length === 0) {
+          return this.renderResultPage(
+            `${processedCount} article(s) processed with action ${action}. ${failedResults.length} article(s) failed: ${errorMessage}`,
+          );
+        }
+
+        return this.renderReviewPage(reviewJwt, pendingArticles, {
+          variant: 'warning',
+          title: 'Selection partially processed',
+          message: `${processedCount} article(s) processed with action ${action}. ${failedResults.length} article(s) failed: ${errorMessage}.`,
+        });
+      }
+
+      if (pendingArticles.length === 0) {
+        return this.renderResultPage(
+          `${selectedIds.length} article(s) processed with action ${action}. No pending articles remain in this batch.`,
+        );
+      }
+
+      return this.renderReviewPage(reviewJwt, pendingArticles, {
+        variant: 'success',
+        title: 'Selection processed',
+        message: `${selectedIds.length} article(s) processed with action ${action}. ${pendingArticles.length} article(s) remain in this batch.`,
+      });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      return this.renderErrorPage(
+        'Invalid or expired review link',
+        (error as Error).message,
       );
     }
-
-    return this.renderReviewPage(reviewJwt, pendingArticles, {
-      variant: 'success',
-      title: 'Selection processed',
-      message: `${selectedIds.length} article(s) processed with action ${action}. ${pendingArticles.length} article(s) remain in this batch.`,
-    });
   }
 
   private normalizeSelectedArticleIds(
@@ -96,7 +138,7 @@ export class ReviewController {
       return [];
     }
 
-    return Array.isArray(articleIds) ? articleIds : [articleIds];
+    return [...new Set(Array.isArray(articleIds) ? articleIds : [articleIds])];
   }
 
   private async getPendingArticles(articleIds: string[]): Promise<NewsArticle[]> {
@@ -114,7 +156,7 @@ export class ReviewController {
     reviewJwt: string,
     articles: NewsArticle[],
     feedback?: {
-      variant: 'success';
+      variant: 'success' | 'warning';
       title: string;
       message: string;
     },
@@ -123,7 +165,7 @@ export class ReviewController {
       .map(
         (article) => `
           <label style="display: block; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; margin-bottom: 12px;">
-            <input type="checkbox" name="articleIds" value="${article.id}" />
+            <input type="checkbox" name="articleIds" value="${this.escapeHtml(article.id)}" />
             <strong>${this.escapeHtml(article.title)}</strong><br />
             <span>${this.escapeHtml(article.author)}</span><br />
             <a href="${this.escapeHtml(article.articleUrl)}">${this.escapeHtml(article.articleUrl)}</a>
@@ -131,9 +173,13 @@ export class ReviewController {
         `,
       )
       .join('');
+    const feedbackStyles =
+      feedback?.variant === 'warning'
+        ? 'background: #fffbeb; color: #92400e; border: 1px solid #fcd34d;'
+        : 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;';
     const feedbackBanner = feedback
       ? `
-          <div style="margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
+          <div style="margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; ${feedbackStyles}">
             <strong>${this.escapeHtml(feedback.title)}</strong><br />
             <span>${this.escapeHtml(feedback.message)}</span>
           </div>
@@ -162,7 +208,18 @@ export class ReviewController {
       <html>
         <body style="font-family: Arial, sans-serif; color: #111827; padding: 24px;">
           <h1>Review completed</h1>
-          <p>${message}</p>
+          <p>${this.escapeHtml(message)}</p>
+        </body>
+      </html>
+    `;
+  }
+
+  private renderErrorPage(title: string, message: string): string {
+    return `
+      <html>
+        <body style="font-family: Arial, sans-serif; color: #111827; padding: 24px;">
+          <h1>${this.escapeHtml(title)}</h1>
+          <p>${this.escapeHtml(message)}</p>
         </body>
       </html>
     `;

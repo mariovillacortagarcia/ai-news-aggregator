@@ -122,4 +122,72 @@ describe('ReviewController', () => {
     expect(page).toContain('Review completed');
     expect(page).toContain('No pending articles remain in this batch.');
   });
+
+  it('should render a user-friendly error page when the review jwt is invalid', async () => {
+    const repository = new InMemoryNewsArticleRepository();
+    const controller = new ReviewController(
+      new ReviewTokenService(),
+      repository,
+      new ApproveArticleUseCase(repository),
+      new RejectArticleUseCase(repository),
+    );
+
+    const page = await controller.getReviewPage('invalid');
+
+    expect(page).toContain('Invalid or expired review link');
+    expect(page).toContain('Invalid review token format');
+  });
+
+  it('should deduplicate selected article ids before processing', async () => {
+    const repository = new InMemoryNewsArticleRepository();
+    const article = createArticle('article-1', ArticleStatus.CANDIDATE);
+    await repository.save(article);
+    const approveUseCase = new ApproveArticleUseCase(repository);
+    const approveSpy = jest.spyOn(approveUseCase, 'execute');
+    const controller = new ReviewController(
+      new ReviewTokenService(),
+      repository,
+      approveUseCase,
+      new RejectArticleUseCase(repository),
+    );
+    const reviewJwt = new ReviewTokenService().createReviewJwt(
+      'editor@example.com',
+      [article.id],
+    );
+
+    await controller.applyReviewAction(reviewJwt, 'approve', [
+      article.id,
+      article.id,
+    ]);
+
+    expect(approveSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should escape article ids and result messages in rendered html', async () => {
+    const repository = new InMemoryNewsArticleRepository();
+    const article = createArticle('article-1" onclick="alert(1)', ArticleStatus.CANDIDATE);
+    await repository.save(article);
+    const controller = new ReviewController(
+      new ReviewTokenService(),
+      repository,
+      new ApproveArticleUseCase(repository),
+      new RejectArticleUseCase(repository),
+    );
+    const reviewJwt = new ReviewTokenService().createReviewJwt(
+      'editor@example.com',
+      [article.id],
+    );
+
+    const reviewPage = await controller.getReviewPage(reviewJwt);
+    const resultPage = await controller.applyReviewAction(
+      reviewJwt,
+      'approve',
+      article.id,
+    );
+
+    expect(reviewPage).toContain(
+      'value="article-1&quot; onclick=&quot;alert(1)"',
+    );
+    expect(resultPage).not.toContain('<script>');
+  });
 });

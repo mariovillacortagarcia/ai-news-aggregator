@@ -27,6 +27,10 @@ export class ReviewTokenService {
   }
 
   verifyReviewJwt(reviewJwt: string): ReviewTokenPayload {
+    if (!reviewJwt) {
+      throw new Error('Missing review token');
+    }
+
     const config = getEmailConfig();
     const [encodedHeader, encodedPayload, encodedSignature] =
       reviewJwt.split('.');
@@ -67,6 +71,10 @@ export class ReviewTokenService {
 
   private sign(payload: ReviewTokenPayload): string {
     const config = getEmailConfig();
+    if (!config.jwtSecret) {
+      throw new Error('JWT secret is not configured');
+    }
+
     const encodedHeader = this.base64UrlEncode(
       Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })),
     );
