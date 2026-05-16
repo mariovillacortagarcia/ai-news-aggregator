@@ -18,11 +18,11 @@ describe('CmsCredentialsProvider', () => {
   it('should resolve wordpress application password from credentials ref', () => {
     process.env.CMS_WORDPRESS_MAIN_APPLICATION_PASSWORD = 'secret';
 
-    const password = provider.getWordpressApplicationPassword(
+    const resolvedCredential = provider.getWordpressApplicationPassword(
       'wordpress-main',
     );
 
-    expect(password).toBe('secret');
+    expect(resolvedCredential).toBe('secret');
   });
 
   it('should throw when credentials ref cannot be resolved', () => {

@@ -11,14 +11,14 @@ export class CmsCredentialsProvider {
       .toUpperCase();
 
     const envVarName = `CMS_${normalizedRef}_APPLICATION_PASSWORD`;
-    const password = process.env[envVarName]?.trim();
+    const resolvedCredential = process.env[envVarName]?.trim();
 
-    if (!password) {
+    if (!resolvedCredential) {
       throw new CmsPublicationException(
         `Missing WordPress application password for credentials ref ${credentialsRef}`,
       );
     }
 
-    return password;
+    return resolvedCredential;
   }
 }
