@@ -1,5 +1,12 @@
 # AI News Aggregator 📰
 
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
+![Nx](https://img.shields.io/badge/Nx-143055?style=for-the-badge&logo=nx&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
+![WordPress](https://img.shields.io/badge/WordPress-21759B?style=for-the-badge&logo=wordpress&logoColor=white)
+![Cucumber](https://img.shields.io/badge/Cucumber-23D96C?style=for-the-badge&logo=cucumber&logoColor=white)
+
 This repository implements a complete backend pipeline for discovering news, reviewing it, enriching it with AI, and publishing it to a CMS.
 
 The system is built as three NestJS microservices inside an Nx monorepo. They do not talk to each other through queues or direct HTTP calls. Instead, they coordinate through persisted state in Supabase. That keeps the runtime model simple: each service is responsible for one stage of the workflow, and the next service polls the database when the previous stage has left an article ready.
