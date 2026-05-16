@@ -12,7 +12,7 @@ interface ReviewTokenPayload {
 
 @Injectable()
 export class ReviewTokenService {
-  createToken(email: string, articleIds: string[]): string {
+  createReviewJwt(email: string, articleIds: string[]): string {
     const now = Math.floor(Date.now() / 1000);
     const config = getEmailConfig();
     const payload: ReviewTokenPayload = {
@@ -26,9 +26,10 @@ export class ReviewTokenService {
     return this.sign(payload);
   }
 
-  verifyToken(token: string): ReviewTokenPayload {
+  verifyReviewJwt(reviewJwt: string): ReviewTokenPayload {
     const config = getEmailConfig();
-    const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
+    const [encodedHeader, encodedPayload, encodedSignature] =
+      reviewJwt.split('.');
 
     if (!encodedHeader || !encodedPayload || !encodedSignature) {
       throw new Error('Invalid review token format');

@@ -52,12 +52,12 @@ describe('ReviewController', () => {
       new ApproveArticleUseCase(repository),
       new RejectArticleUseCase(repository),
     );
-    const token = new ReviewTokenService().createToken('editor@example.com', [
+    const reviewJwt = new ReviewTokenService().createReviewJwt('editor@example.com', [
       candidateArticle.id,
       approvedArticle.id,
     ]);
 
-    const page = await controller.getReviewPage(token);
+    const page = await controller.getReviewPage(reviewJwt);
 
     expect(page).toContain('Article article-1');
     expect(page).not.toContain('Article article-2');
@@ -76,13 +76,13 @@ describe('ReviewController', () => {
       new ApproveArticleUseCase(repository),
       new RejectArticleUseCase(repository),
     );
-    const token = new ReviewTokenService().createToken('editor@example.com', [
+    const reviewJwt = new ReviewTokenService().createReviewJwt('editor@example.com', [
       firstArticle.id,
       secondArticle.id,
     ]);
 
     const page = await controller.applyReviewAction(
-      token,
+      reviewJwt,
       'approve',
       firstArticle.id,
     );
@@ -109,12 +109,12 @@ describe('ReviewController', () => {
       new ApproveArticleUseCase(repository),
       new RejectArticleUseCase(repository),
     );
-    const token = new ReviewTokenService().createToken('editor@example.com', [
+    const reviewJwt = new ReviewTokenService().createReviewJwt('editor@example.com', [
       article.id,
     ]);
 
     const page = await controller.applyReviewAction(
-      token,
+      reviewJwt,
       'reject',
       article.id,
     );

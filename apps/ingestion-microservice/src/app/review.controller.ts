@@ -29,21 +29,21 @@ export class ReviewController {
 
   @Get()
   @Header('Content-Type', 'text/html; charset=utf-8')
-  async getReviewPage(@Query('token') token: string): Promise<string> {
-    const payload = this.reviewTokenService.verifyToken(token);
+  async getReviewPage(@Query('reviewJwt') reviewJwt: string): Promise<string> {
+    const payload = this.reviewTokenService.verifyReviewJwt(reviewJwt);
     const pendingArticles = await this.getPendingArticles(payload.articleIds);
 
     if (pendingArticles.length === 0) {
       return this.renderResultPage('All batch articles have already been reviewed.');
     }
 
-    return this.renderReviewPage(token, pendingArticles);
+    return this.renderReviewPage(reviewJwt, pendingArticles);
   }
 
   @Post('actions')
   @Header('Content-Type', 'text/html; charset=utf-8')
   async applyReviewAction(
-    @Query('token') token: string,
+    @Query('reviewJwt') reviewJwt: string,
     @Body('action') action: ReviewAction,
     @Body('articleIds') articleIds: string[] | string | undefined,
   ): Promise<string> {
@@ -51,7 +51,7 @@ export class ReviewController {
       throw new BadRequestException('Invalid action');
     }
 
-    const payload = this.reviewTokenService.verifyToken(token);
+    const payload = this.reviewTokenService.verifyReviewJwt(reviewJwt);
     const selectedIds = this.normalizeSelectedArticleIds(articleIds);
 
     if (selectedIds.length === 0) {
@@ -82,7 +82,7 @@ export class ReviewController {
       );
     }
 
-    return this.renderReviewPage(token, pendingArticles, {
+    return this.renderReviewPage(reviewJwt, pendingArticles, {
       variant: 'success',
       title: 'Selection processed',
       message: `${selectedIds.length} article(s) processed with action ${action}. ${pendingArticles.length} article(s) remain in this batch.`,
@@ -111,7 +111,7 @@ export class ReviewController {
   }
 
   private renderReviewPage(
-    token: string,
+    reviewJwt: string,
     articles: NewsArticle[],
     feedback?: {
       variant: 'success';
@@ -145,7 +145,7 @@ export class ReviewController {
         <body style="font-family: Arial, sans-serif; color: #111827; padding: 24px;">
           <h1>Review pending articles</h1>
           ${feedbackBanner}
-          <form method="POST" action="/api/review/actions?token=${encodeURIComponent(token)}">
+          <form method="POST" action="/api/review/actions?reviewJwt=${encodeURIComponent(reviewJwt)}">
             ${rows}
             <div style="margin-top: 24px; display: flex; gap: 12px;">
               <button type="submit" name="action" value="approve">Approve selected</button>

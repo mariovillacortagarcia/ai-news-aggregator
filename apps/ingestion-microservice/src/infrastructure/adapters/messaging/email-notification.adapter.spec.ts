@@ -32,7 +32,7 @@ describe('EmailNotificationAdapter', () => {
       }),
     } as unknown as EmailClientProvider;
     const reviewTokenService = {
-      createToken: jest.fn().mockReturnValue('signed-token'),
+      createReviewJwt: jest.fn().mockReturnValue('signed-jwt'),
     } as unknown as ReviewTokenService;
     const adapter = new EmailNotificationAdapter(
       emailClientProvider,
@@ -51,7 +51,7 @@ describe('EmailNotificationAdapter', () => {
 
     await adapter.sendBatchNotification(articles);
 
-    expect(reviewTokenService.createToken).toHaveBeenCalledWith(
+    expect(reviewTokenService.createReviewJwt).toHaveBeenCalledWith(
       'editor@example.com',
       ['article-1'],
     );
@@ -61,7 +61,7 @@ describe('EmailNotificationAdapter', () => {
         from: 'bot@example.com',
         subject: 'News approval batch (1)',
         html: expect.stringContaining(
-          'https://review.example.com/api/review?token=signed-token',
+          'https://review.example.com/api/review?reviewJwt=signed-jwt',
         ),
       }),
     );

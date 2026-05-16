@@ -37,11 +37,11 @@ export class EmailNotificationAdapter implements NotificationPort {
       return;
     }
 
-    const token = this.reviewTokenService.createToken(
+    const reviewJwt = this.reviewTokenService.createReviewJwt(
       config.to,
       articles.map((article) => article.articleId),
     );
-    const reviewUrl = this.buildReviewUrl(config.reviewBaseUrl, token);
+    const reviewUrl = this.buildReviewUrl(config.reviewBaseUrl, reviewJwt);
     const transporter = this.emailClientProvider.getTransporter();
 
     await transporter.sendMail({
@@ -52,12 +52,12 @@ export class EmailNotificationAdapter implements NotificationPort {
     });
   }
 
-  private buildReviewUrl(baseUrl: string, token: string): string {
+  private buildReviewUrl(baseUrl: string, reviewJwt: string): string {
     const normalizedBaseUrl = baseUrl.endsWith('/')
       ? baseUrl.slice(0, -1)
       : baseUrl;
 
-    return `${normalizedBaseUrl}/api/review?token=${encodeURIComponent(token)}`;
+    return `${normalizedBaseUrl}/api/review?reviewJwt=${encodeURIComponent(reviewJwt)}`;
   }
 
   private buildHtml(

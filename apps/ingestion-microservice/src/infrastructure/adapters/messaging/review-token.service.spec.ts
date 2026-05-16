@@ -18,8 +18,8 @@ describe('ReviewTokenService', () => {
   it('should create and verify a signed review token', () => {
     const service = new ReviewTokenService();
 
-    const token = service.createToken('editor@example.com', ['a1', 'a2']);
-    const payload = service.verifyToken(token);
+    const reviewJwt = service.createReviewJwt('editor@example.com', ['a1', 'a2']);
+    const payload = service.verifyReviewJwt(reviewJwt);
 
     expect(payload.email).toBe('editor@example.com');
     expect(payload.articleIds).toEqual(['a1', 'a2']);
@@ -28,10 +28,10 @@ describe('ReviewTokenService', () => {
 
   it('should reject tokens with invalid signatures', () => {
     const service = new ReviewTokenService();
-    const token = service.createToken('editor@example.com', ['a1']);
-    const tampered = `${token.slice(0, -1)}x`;
+    const reviewJwt = service.createReviewJwt('editor@example.com', ['a1']);
+    const tampered = `${reviewJwt.slice(0, -1)}x`;
 
-    expect(() => service.verifyToken(tampered)).toThrow(
+    expect(() => service.verifyReviewJwt(tampered)).toThrow(
       'Invalid review token signature',
     );
   });

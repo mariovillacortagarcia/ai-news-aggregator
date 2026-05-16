@@ -49,13 +49,13 @@ describe('Review Flow E2E', () => {
     await context.articleRepository.save(secondArticle);
 
     const tokenService = context.app.get(ReviewTokenService);
-    const token = tokenService.createToken('editor@example.com', [
+    const reviewJwt = tokenService.createReviewJwt('editor@example.com', [
       firstArticle.id,
       secondArticle.id,
     ]);
 
     const response = await request(context.app.getHttpServer())
-      .post(`/api/review/actions?token=${encodeURIComponent(token)}`)
+      .post(`/api/review/actions?reviewJwt=${encodeURIComponent(reviewJwt)}`)
       .type('form')
       .send({
         action: 'approve',
